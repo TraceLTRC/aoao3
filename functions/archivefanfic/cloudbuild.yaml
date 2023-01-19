@@ -5,5 +5,5 @@ steps:
   args: ['go', 'test']
   dir: 'functions/archivefanfic'
 - name: 'gcr.io/cloud-builders/gcloud'
-  args: ['functions', 'deploy', 'archivefanfic', '--trigger-http', '--runtime', 'go119']
+  args: ['functions', 'deploy', 'archivefanfic', '--trigger-http', '--runtime', 'go119', '--region=europe-west3', '--source=.']
   dir: 'functions/archivefanfic'
