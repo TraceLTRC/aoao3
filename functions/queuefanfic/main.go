@@ -1,14 +1,33 @@
 package queuefanfic
 
-import "net/http"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
 
-func QueueFanfic(req http.Request, res http.ResponseWriter) {
-	var Body struct {
+	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
+)
+
+func init() {
+	functions.HTTP("queuefanfic", QueueFanfic)
+}
+
+func QueueFanfic(w http.ResponseWriter, r *http.Request) {
+	var b struct {
 		Name string
 	}
 
-	switch req.Method {
+	switch r.Method {
 	case "GET":
+		fmt.Fprintf(w, "You did a get request to %s!", r.URL)
+	case "POST":
+		err := json.NewDecoder(r.Body).Decode(&b)
+		if err != nil {
+			fmt.Fprintf(w, "Failed to decode, %v", err)
+		}
 
+		fmt.Fprintf(w, "You did a post request, %s!", b.Name)
+	default:
+		fmt.Fprintf(w, "You did a %s request!", r.Method)
 	}
 }
