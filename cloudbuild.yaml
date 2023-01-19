@@ -41,3 +41,8 @@ steps:
     volumes:
     - name: 'ssh'
       path: /root/.ssh
+
+availableSecrets:
+  secretManager:
+  - versionName: projects/omori-archive-375106/secrets/github-ssh-key/versions/latest
+    env: 'SSH_KEY'
