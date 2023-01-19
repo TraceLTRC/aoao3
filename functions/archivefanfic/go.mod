@@ -1,4 +1,4 @@
-module functions/archivefanfic
+module archive.tracel.xyz/functions/archivefanfic
 
 go 1.19
 
