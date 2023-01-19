@@ -4,8 +4,8 @@ steps:
     args: 
     - -c
     - |
-      git fetch --depth=2 origin main
-      git --no-pager diff --name-only HEAD^ HEAD | grep "/" | cut -d/ -f1 | sort | uniq > /workspace/diff.txt
+      git fetch --depth=2 origin master
+      git --no-pager diff --dirstat=files,0 HEAD~1 | sed 's/^[ 0-9.]\+% //g' > /workspace/diff.txt
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: /bin/bash
     args: 
