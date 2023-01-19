@@ -3,7 +3,7 @@ steps:
   args: ['go', 'version']
 - name: golang
   args: ['go', 'test']
-  dir: '.'
+  dir: 'functions/archivefanfic'
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['functions', 'deploy', 'archivefanfic', '--trigger-http', '--runtime', 'go119']
-  dir: '.'
+  dir: 'functions/archivefanfic'
