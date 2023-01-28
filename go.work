@@ -1,7 +1,6 @@
 go 1.19
 
 use (
-	./functions/archivefanfic
 	./scrapers/HitsScraper
 	./scrapers/Worker
 )

@@ -1,9 +1,7 @@
 steps:
-- name: golang
-  args: ['go', 'version']
-- name: golang
-  args: ['go', 'test']
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
   dir: 'functions/archivefanfic'
 - name: 'gcr.io/cloud-builders/gcloud'
-  args: ['functions', 'deploy', 'archivefanfic', '--trigger-http', '--runtime', 'go119', '--region=europe-west3', '--source=.']
+  args: ['functions', 'deploy', 'archivefanfic', '--gen2', '--memory=256MB', '--timeout=180s' ,'--trigger-http', '--runtime', 'nodejs18', '--region=europe-west3', '--source=.']
   dir: 'functions/archivefanfic'
