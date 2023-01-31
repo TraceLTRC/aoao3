@@ -320,31 +320,14 @@ async function uploadToObject(client: S3Client, path: string, hash: string, work
     return await client.send(command)
 }
 
-async function getWorkContentFromObject(client: S3Client, workId: string, hash: string): Promise<WorkDocument> {
-    const command = new GetObjectCommand({
-        Bucket: process.env.OBJECT_BUCKET_NAME,
-        Key: `${workId}/${hash}.json.br`,
-        ChecksumMode: ChecksumMode.ENABLED,
-    })
-
-    const result = await client.send(command)
-
-    if (result.Body == undefined) {
-        throw new Error(`No work content in path ${workId}/${hash}.json.br`)
-    }
-
-    const data = JSON.parse(zlib.brotliDecompressSync(await result.Body.transformToByteArray(), {
-        params: {
-            [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
-        }
-    }).toString())
-
-    return data
-} 
-
 ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
     if (req.body == null || req.body.workId == null) {
         res.status(400).end()
+        return
+    }
+
+    if (req.method != 'POST') {
+        res.sendStatus(405).end()
         return
     }
     const workId = req.body.workId as string
@@ -364,23 +347,6 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
         endpoint: `https://${process.env.OBJECT_ENDPOINT}`,
         region: process.env.OBJECT_REGION,
     })
-
-    if (req.method == 'GET') {
-        const doc = await index.getDocument<Pick<WorkDocument, "contentHash">>(workId, {
-            fields: ["contentHash"]
-        })
-
-        const latestHash = doc.contentHash.at(-1)
-        if (latestHash == undefined) {
-            throw new Error(`Unable to get latest hash from document for work ${workId}`)
-        }
-        const content = await getWorkContentFromObject(objectClient, workId, latestHash)
-        res.contentType('application/json').send(content).end()
-        return;
-    } else if (req.method != 'POST') {
-        res.sendStatus(405).end()
-        return
-    }
 
     const {work: fetchedDoc, content: fetchedContent} = await getWork(workId)
     const fetchedHash = fetchedDoc.contentHash.at(-1)
