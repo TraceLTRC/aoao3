@@ -1,8 +1,10 @@
 import * as ff from '@google-cloud/functions-framework'
 import * as cheerio from 'cheerio'
+import * as zlib from 'node:zlib'
 import axios from 'axios'
-import { MeiliSearch } from 'meilisearch'
-import { MeiliSearchApiError } from 'meilisearch/dist/types/errors'
+import { MeiliSearch, MeiliSearchApiError } from 'meilisearch'
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsCommand, DeleteObjectCommand, ChecksumMode } from '@aws-sdk/client-s3'
+import { createHash } from 'crypto'
 
 enum Warnings {
     Invalid = 0,
@@ -33,11 +35,17 @@ enum Categories {
     Other = (1 << 5),
 }
 
+type ArchiveMeta = {
+    lastChecked: number,
+    contentHash: string[],
+}
+
 type WorkStats = {
-    publishedTime: Date,
-    lastUpdated?: Date,
+    publishedTime: number,
+    lastUpdated?: number,
     words: number,
-    chapter: [number, number],
+    currChapter: number,
+    maxChapter: number,
     kudos: number,
     bookmarks: number,
     hits: number,
@@ -74,35 +82,34 @@ type WorkContent = {
 
 type Work = {
     id: string,
-    content: WorkContent
 } & WorkMeta
 
-function workFactory(id: string): Work {
+type WorkDocument = Work & ArchiveMeta
+
+const MAX_ARCHIVE_REFRESH = 30 * 60 * 1000;
+
+function workFactory(id: string): WorkDocument {
     return {
         authors: [],
         bookmarks: 0,
         categories: Categories.Invalid,
-        chapter: [-1, -1],
+        currChapter: 0,
+        maxChapter: 0,
         characters: [],
         fandoms: [],
         hits: -1,
         id: id,
         kudos: 0,
         language: "",
-        publishedTime: new Date(0),
+        publishedTime: 0,
         rating: Ratings.Invalid,
         relationships: [],
         tags: [],
         title: "",
         warnings: Warnings.Invalid,
         words: -1,
-        content: {
-            beginningNotes: "",
-            chapters: [],
-            endingNotes: "",
-            skin: "",
-            summary: "",
-        }
+        contentHash: [],
+        lastChecked: Date.now()
     }
 }
 
@@ -159,6 +166,13 @@ function stringToCategories(str: string): Categories {
 
 async function getWork(workId: string) {
     const work = workFactory(workId)
+    const content: WorkContent = {
+        beginningNotes: "",
+        chapters: [],
+        endingNotes: "",
+        skin: "",
+        summary: "",
+    }
 
     const url = `https://archiveofourown.org/works/${workId}?view_full_work=true&view_adult=true`
     const { data, status } = await axios.get<string>(url, {responseType: 'document', validateStatus: (status) => status < 500})
@@ -172,13 +186,13 @@ async function getWork(workId: string) {
     const prefaceEl = $("div#inner div#workskin > div.preface.group")
     
     work.title = prefaceEl.find(".title").text().trim()
-    work.authors = prefaceEl.find("a[rel=\"author\"]").map((i, el) => {
+    work.authors = prefaceEl.find("a[rel=\"author\"]").map((i, el) => { // All linked authors would be included!
         return $(el).text().trim()
     }).toArray()
-    work.content.beginningNotes = prefaceEl.find("div.notes").children().not("h3").html()?.trim() ?? ""
-    work.content.endingNotes = $("div#work_endnotes").children().not('h3').html() ?? ""
-    work.content.summary = prefaceEl.find("div.summary").children().not("h3").html()?.trim() ?? ""
-    work.content.skin = $("div#inner style").text().trim() ?? ""
+    content.beginningNotes = prefaceEl.find("div.notes").children().not("h3").html()?.trim() ?? ""
+    content.endingNotes = $("div#work_endnotes").children().not('h3').html()?.trim() ?? ""
+    content.summary = prefaceEl.find("div.summary").children().not("h3").html()?.trim() ?? ""
+    content.skin = $("div#inner style").text().trim() ?? ""
 
     // collect stats
     $("div#inner dl.work.meta").find("dd").each((i, el) => {
@@ -212,19 +226,16 @@ async function getWork(workId: string) {
             work.language = $(el).text().trim()
         } else if ($(el).hasClass("published")) {
             const splitDate = $(el).text().trim().split('-')
-            work.publishedTime = new Date(+splitDate[0], +splitDate[1] - 1, +splitDate[2])
+            work.publishedTime = Date.UTC(+splitDate[0], +splitDate[1] - 1, +splitDate[2])
         } else if ($(el).hasClass("status")) {
             const splitDate = $(el).text().trim().split('-')
-            work.lastUpdated = new Date(+splitDate[0], +splitDate[1] - 1, +splitDate[2])
+            work.lastUpdated = Date.UTC(+splitDate[0], +splitDate[1] - 1, +splitDate[2])
         } else if ($(el).hasClass("words")) {
             work.words = +$(el).text().trim()
         } else if ($(el).hasClass("chapters")) {
             const chapterSplit = $(el).text().trim().split("/")
-            if (chapterSplit[1] == '?') {
-                work.chapter = [+chapterSplit[0], -1]
-            } else {
-                work.chapter = [+chapterSplit[0], +chapterSplit[1]]
-            }
+            work.currChapter = Number.parseInt(chapterSplit[0])
+            work.maxChapter = (chapterSplit[1] == '?') ? -1 : Number.parseInt(chapterSplit[0])
         } else if ($(el).hasClass("kudos")) {
             work.kudos = +$(el).text().trim()
         } else if ($(el).hasClass("bookmarks")) {
@@ -235,8 +246,16 @@ async function getWork(workId: string) {
     })
 
     // Collect chapters
-    work.content.chapters = $("div[id^=\"chapter-\"]").map((i, el) => {
-        return $(el).children().map((i, el) => {
+    if (work.maxChapter == 1) {
+        content.chapters = [{
+            beginningNotes: "",
+            endingNotes: "",
+            summary: "",
+            title: "",
+            content: $("div#chapters div.userstuff").html()?.trim() ?? ""
+        }]
+    } else {
+        content.chapters = $("div[id^=\"chapter-\"]").map((i, el) => {
             const chapter: WorkChapter = {
                 beginningNotes: "",
                 content: "",
@@ -244,31 +263,84 @@ async function getWork(workId: string) {
                 summary: "",
                 title: "",
             }
-
-            if ($(el).is(".chapter.preface.group[role=\"complementary\"]")) { // Beginning notes, summary, and title
-                const preTitle = $(el).children(".title").first().clone().children().remove().end().text().trim()
-                if (preTitle.startsWith(": ")) {
-                    chapter.title = preTitle.substring(2)
-                } else if (preTitle.length > 0) {
-                    console.error("Unexpected chapter prefix!")
-                } else {
-                    chapter.title = ""
+    
+            $(el).children().each((i, el) => {
+                if ($(el).is(".chapter.preface.group[role=\"complementary\"]")) { // Beginning notes, summary, and title
+                    const preTitle = $(el).children(".title").first().clone().children().remove().end().text().trim()
+                    if (preTitle.startsWith(": ")) {
+                        chapter.title = preTitle.substring(2)
+                    } else if (preTitle.length > 0) {
+                        console.error("Unexpected chapter prefix!")
+                    } else {
+                        chapter.title = ""
+                    }
+    
+                    chapter.summary = $(el).find("div.summary > blockquote.userstuff").html()?.trim() ?? ""
+                    chapter.beginningNotes = $(el).find("div.notes > blockquote.userstuff").html()?.trim() ?? ""
+                } else if ($(el).is(".userstuff.module")) {
+                    chapter.content = $(el).children(".landmark").remove().end().html()?.trim() ?? ""
+                } else if ($(el).is(".chapter.preface.group:not([role])")) {
+                    chapter.endingNotes = $(el).find("blockquote").html()?.trim() ?? ""
                 }
-
-                chapter.summary = $(el).find("div.summary > blockquote.userstuff").html() ?? ""
-                chapter.beginningNotes = $(el).find("div.notes > blockquote.userstuff").html() ?? ""
-            } else if ($(el).is(".userstuff.module")) {
-                chapter.content = $(el).children(".landmark").remove().end().html() ?? ""
-            } else if ($(el).is(".chapter.preface.group:not([role])")) {
-                chapter.endingNotes = $(el).find("blockquote").html() ?? ""
-            }
-
+            })
+    
             return chapter
         }).toArray()
-    }).toArray()
+    }
 
-    return work
+    const hash = createHash('md5')
+                .update(JSON.stringify(content))
+                .digest('hex')
+
+    work.contentHash.push(hash)
+
+    return {work, content}
 }
+
+async function uploadToObject(client: S3Client, path: string, hash: string, work: WorkContent) {
+    const data = zlib.brotliCompressSync(JSON.stringify(work), {
+        params: {
+            [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
+        }
+    })
+
+    const compressedHash = createHash('md5')
+    .update(data)
+    .digest('base64')
+
+    const command = new PutObjectCommand({
+        Bucket: process.env.OBJECT_BUCKET_NAME,
+        Key: `${path}/${hash}.json.br`,
+        ContentType: 'application/json',
+        ContentEncoding: 'br',
+        Body: data,
+        ContentMD5: compressedHash
+    })
+
+    return await client.send(command)
+}
+
+async function getWorkContentFromObject(client: S3Client, workId: string, hash: string): Promise<WorkDocument> {
+    const command = new GetObjectCommand({
+        Bucket: process.env.OBJECT_BUCKET_NAME,
+        Key: `${workId}/${hash}.json.br`,
+        ChecksumMode: ChecksumMode.ENABLED,
+    })
+
+    const result = await client.send(command)
+
+    if (result.Body == undefined) {
+        throw new Error(`No work content in path ${workId}/${hash}.json.br`)
+    }
+
+    const data = JSON.parse(zlib.brotliDecompressSync(await result.Body.transformToByteArray(), {
+        params: {
+            [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
+        }
+    }).toString())
+
+    return data
+} 
 
 ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
     if (req.body == null || req.body.workId == null) {
@@ -277,23 +349,87 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
     }
     const workId = req.body.workId as string
 
-    console.log(process.env.ADMIN_API_KEY)
-
-    const client = new MeiliSearch({
-        host: `http://${process.env.SEARCH_DOMAIN}`,
-        apiKey: process.env.ADMIN_API_KEY,
+    const searchClient = new MeiliSearch({
+        host: `https://${process.env.SEARCH_DOMAIN}`,
+        apiKey: process.env.SEARCH_API_KEY,
     });
-    try {
-        const doc = await (await client.getIndex('archives')).getDocument(workId)
-        res.send(doc).end()
-        return
-    } catch (e) {
-        if (e instanceof MeiliSearchApiError) {
-            console.log(`code: ${e.code}\ntype: ${e.type}`)
-        } else {
-            console.error(e)
+
+    const index = await searchClient.getIndex('archives')
+
+    const objectClient = new S3Client({
+        credentials: {
+            accessKeyId: process.env.OBJECT_ACCESS_KEY ?? "",
+            secretAccessKey: process.env.OBJECT_SECRET_KEY ?? ""
+        },
+        endpoint: `https://${process.env.OBJECT_ENDPOINT}`,
+        region: process.env.OBJECT_REGION,
+    })
+
+    if (req.method == 'GET') {
+        const doc = await index.getDocument<Pick<WorkDocument, "contentHash">>(workId, {
+            fields: ["contentHash"]
+        })
+
+        const latestHash = doc.contentHash.at(-1)
+        if (latestHash == undefined) {
+            throw new Error(`Unable to get latest hash from document for work ${workId}`)
         }
-    } finally {
-        res.end()
+        const content = await getWorkContentFromObject(objectClient, workId, latestHash)
+        res.contentType('application/json').send(content).end()
+        return;
+    } else if (req.method != 'POST') {
+        res.sendStatus(405).end()
+        return
+    }
+
+    const {work: fetchedDoc, content: fetchedContent} = await getWork(workId)
+    const fetchedHash = fetchedDoc.contentHash.at(-1)
+    if (fetchedHash == undefined) throw new Error("Fetched doc contains no hash!")
+    
+    try {
+        const doc = await index.getDocument<WorkDocument>(workId)
+        const checkDur = Date.now() - doc.lastChecked
+        if (checkDur < MAX_ARCHIVE_REFRESH) {
+            console.log(`Work ${workId} has been updated recently, ignoring... (${Math.floor(checkDur / 1000)}s)`)
+            res.status(304).send(`Archive has been refreshed recently! Wait ${Math.floor(checkDur / 1000)} seconds...`)
+            return;
+        }
+
+        if (doc.contentHash.at(-1) != fetchedHash) {
+            console.log(`Work ${workId} has different hash! Updating...`)
+
+            doc.contentHash.push(fetchedHash)
+
+            await Promise.all([
+                uploadToObject(objectClient, workId, fetchedHash, fetchedContent),
+                index.updateDocuments([doc])
+            ])
+
+            console.log(`Work ${workId} has been fully updated!`)
+            res.sendStatus(202).end()
+            return;
+        }
+
+        // Update stats
+        await index.updateDocuments([fetchedDoc])
+        console.log(`Work ${workId} has updated their stats!`)
+        res.sendStatus(202).end()
+        return;
+    } catch (e) {
+        if (e instanceof MeiliSearchApiError && e.code == 'document_not_found') {
+            // First archive
+
+            await Promise.all([
+                uploadToObject(objectClient, workId, fetchedHash, fetchedContent),
+                index.addDocuments([fetchedDoc])
+            ])
+
+            console.log(`Work ${workId} has been archived!`)
+            res.sendStatus(202).end()
+            return;
+        } else { // do if the error is meili related, delete object, else delete document
+            res.sendStatus(500).end()
+            console.error(`Unexpected error on work ${workId}`)
+        }
     }
 })
