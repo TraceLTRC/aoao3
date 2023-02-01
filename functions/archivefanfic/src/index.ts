@@ -186,7 +186,7 @@ async function getWork(workId: string) {
     const prefaceEl = $("div#inner div#workskin > div.preface.group")
     
     work.title = prefaceEl.find(".title").text().trim()
-    work.authors = prefaceEl.find("a[rel=\"author\"]").map((i, el) => { // All linked authors would be included!
+    work.authors = prefaceEl.find(".byline > a[rel=\"author\"]").map((i, el) => {
         return $(el).text().trim()
     }).toArray()
     content.beginningNotes = prefaceEl.find("div.notes").children().not("h3").html()?.trim() ?? ""
