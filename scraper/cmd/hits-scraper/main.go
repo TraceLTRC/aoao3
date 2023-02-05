@@ -22,7 +22,7 @@ const (
 )
 
 func main() {
-	workerAmt := flag.Int("worker-amount", 25, "Amount of workers posting to the function")
+	workerAmt := flag.Int("worker-amount", 30, "Amount of workers posting to the function")
 	startingPage := flag.Int("starting-page", 1, "Amount of fanfics to be archived before sleeping")
 
 	flag.Parse()
@@ -65,7 +65,6 @@ func main() {
 	for i := *workerAmt; i > 0; i-- {
 		wg.Add(1)
 		go workers.PostWorker(ctx, log, rdb, &wg, archiveUrl, "workIds:queue:hits")
-		time.Sleep(time.Second * 5)
 	}
 
 	wg.Add(1)

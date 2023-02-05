@@ -18,7 +18,9 @@ import (
 func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client, wg *sync.WaitGroup, fandom string, startingPage int) {
 	defer wg.Done()
 
-	url := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=hits&page=%d&tag_id=", startingPage) + url.QueryEscape(fandom)
+	var lastPage int
+
+	startingUrl := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=hits&page=%d&tag_id=", startingPage) + url.QueryEscape(fandom)
 
 	collector := colly.NewCollector(colly.AllowedDomains("archiveofourown.org"))
 
@@ -40,30 +42,26 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 
 		log.Info.Printf("Added %s to queue", workId)
 	})
+	defer collector.OnHTMLDetach("ol.work.index.group > li[id^=\"work_\"]")
 
-	collector.OnHTML("a[rel=\"next\"]", func(h *colly.HTMLElement) {
-		link, ok := h.DOM.Attr("href")
-		if !ok {
-			log.Info.Printf("No link detected on next anchor...")
+	collector.OnHTML("ol.pagination.actions", func(h *colly.HTMLElement) {
+		if lastPage != 0 {
 			return
 		}
 
-		worksInQueue, err := rdb.ZCount(context.Background(), "workIds:queue:hits", "-inf", "+inf").Result()
+		lastUrl, exists := h.DOM.First().ChildrenFiltered("li").Eq(-2).ChildrenFiltered("a").First().Attr("href")
+		if !exists {
+			lastPage = 5000
+			log.Err.Printf("Unable to find last page while searchin for element")
+		}
+
+		i, err := strconv.Atoi(lastUrl[strings.LastIndex(lastUrl, "&page=")+6 : strings.LastIndex(lastUrl, "&work_search")])
 		if err != nil {
-			log.Err.Printf("Failed to get amount of works in queue...")
-		} else {
-			if worksInQueue > 1000 {
-				log.Info.Printf("Queue is 1000 in length! Sleeping for 5 minutes...")
-				time.Sleep(time.Minute * 1)
-			}
+			lastPage = 5000
+			log.Err.Printf("Unable to find last page while converting int, %v", err)
 		}
 
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(time.Minute * 1):
-			h.Request.Visit(link)
-		}
+		lastPage = i
 	})
 
 	collector.OnRequest(func(r *colly.Request) {
@@ -77,10 +75,32 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 		}
 	})
 
-	err := collector.Visit(url)
+	// first visit
+	err := collector.Visit(startingUrl)
 	if err != nil {
-		log.Err.Printf("Failed to visit %s, %v", url, err)
+		log.Err.Printf("Failed to visit %s, %v", startingUrl, err)
 	}
+	collector.OnHTMLDetach("ol.pagination.actions")
 
-	log.Info.Printf("Hit scraper finished...")
+	page := startingPage + 1
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info.Printf("Hit scraper finished...")
+			return
+		case <-time.After(time.Second * 30):
+			if page > lastPage {
+				log.Info.Printf("Hit scraper (%s) finished...", fandom)
+				return
+			}
+
+			pageUrl := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=hits&page=%d&tag_id=", page) + url.QueryEscape(fandom)
+			err := collector.Visit(pageUrl)
+			if err != nil {
+				log.Err.Printf("Error visiting %s, %v", pageUrl, err)
+			}
+
+			page++
+		}
+	}
 }
