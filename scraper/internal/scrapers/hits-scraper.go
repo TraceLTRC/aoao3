@@ -40,7 +40,7 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 			log.Err.Printf("Failed to add work in queue, %v", err)
 		}
 
-		log.Info.Printf("Added %s to queue", workId)
+		log.Info.Printf("Added %s to queue (%s)", workId, fandom)
 	})
 	defer collector.OnHTMLDetach("ol.work.index.group > li[id^=\"work_\"]")
 
@@ -86,7 +86,7 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 	for {
 		select {
 		case <-ctx.Done():
-			log.Info.Printf("Hit scraper finished...")
+			log.Info.Printf("Hit scraper (%s) finished...", fandom)
 			return
 		case <-time.After(time.Second * 30):
 			if page > lastPage {
