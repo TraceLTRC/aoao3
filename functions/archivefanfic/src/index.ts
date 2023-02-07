@@ -294,6 +294,10 @@ async function getWork(workId: string) {
 
     work.contentHash.push(hash)
 
+    if (work.hits == -1 || work.title == "") {
+        throw new Error("Title and hits were not touched, is AO3 Down?")
+    }  
+
     return {work, content}
 }
 
