@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio'
 import * as zlib from 'node:zlib'
 import axios from 'axios'
 import { MeiliSearch, MeiliSearchApiError } from 'meilisearch'
-import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsCommand, DeleteObjectCommand, ChecksumMode } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createHash } from 'crypto'
 
 enum Warnings {
