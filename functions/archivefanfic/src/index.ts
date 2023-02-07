@@ -368,7 +368,7 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
 
             await Promise.all([
                 uploadToObject(objectClient, workId, fetchedHash, fetchedContent),
-                index.updateDocuments([doc])
+                index.updateDocuments([fetchedDoc])
             ])
 
             console.log(`Work ${workId} has been fully updated!`)
