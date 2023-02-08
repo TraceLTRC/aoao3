@@ -58,7 +58,8 @@ for (let work of works.hits) {
             contentHash: []
         }
         for (let content of res.Contents) {
-            let contentHash = content.ETag.substring(1, content.ETag.length - 1)
+            let contentHash = content.Key.substring(work.id.length + 1, content.Key.length - '.json.br'.length)
+            console.log(`${work.id} | ${contentHash}`)
             newDoc.contentHash.push(contentHash)
         }
 
@@ -69,4 +70,4 @@ for (let work of works.hits) {
     }
 }
 
-console.log(doc)
+await search.updateDocuments(doc)
