@@ -6,7 +6,7 @@ admin.initializeApp()
 const firestore = admin.firestore()
 
 const objectClient = new S3({
-    endpoint: process.env.OBJECT_ENDPOINT,
+    endpoint: `https://${process.env.OBJECT_ENDPOINT}`,
     credentials: {
         accessKeyId: process.env.OBJECT_ACCESS_KEY ?? "",
         secretAccessKey: process.env.OBJECT_SECRET_KEY ?? ""
