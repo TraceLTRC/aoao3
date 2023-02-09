@@ -49,18 +49,30 @@ func PostWorker(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client
 				})
 				if err != nil {
 					log.Err.Printf("Error on marshalling Json for work %s, %v", workId, err)
+					rdb.ZAdd(context.Background(), queueKey, redis.Z{
+						Member: workId,
+						Score:  float64(time.Now().UnixMilli()),
+					})
 					return
 				}
 
 				client, err := idtoken.NewClient(context.Background(), endpoint)
 				if err != nil {
 					log.Err.Printf("Error on getting a client for work %s, %v", workId, err)
+					rdb.ZAdd(context.Background(), queueKey, redis.Z{
+						Member: workId,
+						Score:  float64(time.Now().UnixMilli()),
+					})
 					return
 				}
 
 				resp, err := client.Post(endpoint, "application/json", bytes.NewReader(body))
 				if err != nil {
 					log.Err.Printf("Error on posting to URL for work %s, %v", workId, err)
+					rdb.ZAdd(context.Background(), queueKey, redis.Z{
+						Member: workId,
+						Score:  float64(time.Now().UnixMilli()),
+					})
 					return
 				}
 				defer resp.Body.Close()
@@ -70,10 +82,16 @@ func PostWorker(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client
 					log.Info.Printf("Queued archiving task for work %s", workId)
 				case 304:
 					log.Info.Printf("Work %s has already been archived recently!", workId)
+					rdb.ZAdd(context.Background(), queueKey, redis.Z{
+						Member: workId,
+						Score:  float64(time.Now().UnixMilli()),
+					})
 				default:
 					log.Err.Printf("Work %s got an unexpected status code, %d", workId, resp.StatusCode)
-					// body, _ := io.ReadAll(resp.Body)
-					// log.Err.Printf("%s", string(body))
+					rdb.ZAdd(context.Background(), queueKey, redis.Z{
+						Member: workId,
+						Score:  float64(time.Now().UnixMilli()),
+					})
 				}
 			}()
 		}

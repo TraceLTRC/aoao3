@@ -40,11 +40,11 @@ const searchClient = new MeiliSearch({
 })
 
 async function GetAo3Archive(client: S3Client, workId: string, contentHash: string): Promise<WorkContent> {
-    console.log(`${workId}/${contentHash}.json.br`)
+    console.log(`Got ${workId}/${contentHash}.br`)
 
     const command = new GetObjectCommand({
         Bucket: "archive-bucket",
-        Key: `${workId}/${contentHash}.json.br`,
+        Key: `${workId}/${contentHash}.br`,
         ChecksumMode: ChecksumMode.ENABLED,
     })
 

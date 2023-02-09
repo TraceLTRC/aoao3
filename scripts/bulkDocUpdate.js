@@ -58,7 +58,7 @@ for (let work of works.hits) {
             contentHash: []
         }
         for (let content of res.Contents) {
-            let contentHash = content.Key.substring(work.id.length + 1, content.Key.length - '.json.br'.length)
+            let contentHash = content.Key.substring(work.id.length + 1, content.Key.length - '.br'.length)
             console.log(`${work.id} | ${contentHash}`)
             newDoc.contentHash.push(contentHash)
         }
