@@ -30,7 +30,8 @@ function formatBytes(bytes: number, decimals = 2) {
 async function revalidateCache(data: {size: number, keys: number}) {
     await firestore.collection('cache').doc('bucketStats').set({
         value: data,
-        ttl: Date.now() + (24 * 60 * 60 * 1000)
+        ttl: Date.now() + (24 * 60 * 60 * 1000),
+        isUpdating: false
     })
 }
 
@@ -45,8 +46,6 @@ const getBucketStats = async (params: ListObjectsV2CommandInput, out = { size: 0
     out.size += res.Contents.reduce((prev, curr) => {
         return prev + (curr.Size ?? 0)
     }, 0)
-
-    console.log(out)
 
     if (res.IsTruncated) {
         await getBucketStats(Object.assign(params, { ContinuationToken: res.NextContinuationToken }), out)
@@ -63,8 +62,12 @@ ff.http('GetBucketStats', async (_, res) => {
         data = doc.get('value')
         
         const ttl = doc.get('ttl')
-        
-        if (ttl < Date.now()) {
+        const isUpdating = doc.get('isUpdating')
+        if (ttl < Date.now() && !isUpdating) {
+            console.log("Cache is stale, updating!")
+            await firestore.collection('cache').doc('bucketStats').set({
+                isUpdating: true
+            })
             getBucketStats({
                 Bucket: process.env.OBJECT_NAME
             }).then((val) => {
