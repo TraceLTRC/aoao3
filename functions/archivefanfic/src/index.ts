@@ -6,35 +6,6 @@ import { MeiliSearch, MeiliSearchApiError } from 'meilisearch'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createHash } from 'crypto'
 
-enum Warnings {
-    Invalid = 0,
-    Unknown = 1,
-    None = (1 << 1),
-    GraphicViolence = (1 << 2),
-    MajorDeath = (1 << 3),
-    NonCon = (1 << 4),
-    Underage = (1 << 5)
-}
-
-enum Ratings {
-    Invalid,
-    NotRated,
-    General,
-    Teen,
-    Mature,
-    Explicit,
-}
-
-enum Categories {
-    Invalid = 0,
-    Gen = 1,
-    FemaleMale = (1 << 1),
-    FemaleFemale = (1 << 2),
-    MaleMale = (1 << 3),
-    Multi = (1 << 4),
-    Other = (1 << 5),
-}
-
 type ArchiveMeta = {
     lastChecked: number,
     contentHash: string[],
@@ -54,9 +25,9 @@ type WorkStats = {
 type WorkMeta = {
     title: string,
     authors: string[],
-    warnings: Warnings,
-    rating: Ratings,
-    categories: Categories,
+    warnings: string[],
+    rating: string,
+    categories: string[],
     fandoms: string[],
     relationships: string[],
     characters: string[],
@@ -92,7 +63,7 @@ function workFactory(id: string): WorkDocument {
     return {
         authors: [],
         bookmarks: 0,
-        categories: Categories.Invalid,
+        categories: [],
         currChapter: 0,
         maxChapter: 0,
         characters: [],
@@ -102,66 +73,15 @@ function workFactory(id: string): WorkDocument {
         kudos: 0,
         language: "",
         publishedTime: 0,
-        rating: Ratings.Invalid,
+        rating: "",
         relationships: [],
         tags: [],
         title: "",
-        warnings: Warnings.Invalid,
+        warnings: [""],
         words: -1,
         contentHash: [],
         lastChecked: Date.now()
     }
-}
-
-function stringToRating(str: string): Ratings {
-    switch (str) {
-        case "Not Rated":
-            return Ratings.NotRated
-        case "General Audiences":
-            return Ratings.General
-        case "Teen And Up Audiences":
-            return Ratings.Teen
-        case "Mature":
-            return Ratings.Mature
-        case "Explicit":
-            return Ratings.Explicit
-        default:
-            return Ratings.Invalid
-    }
-}
-
-function stringToWarnings(str: string): Warnings {
-	switch (str) {
-        case "Rape/Non-Con":
-            return Warnings.NonCon
-        case "Underage":
-            return Warnings.Underage
-        case "Creator Chose Not To Use Archive Warnings":
-            return Warnings.Unknown
-        case "No Archive Warnings Apply":
-            return Warnings.None
-        case "Graphic Depictions Of Violence":
-            return Warnings.GraphicViolence
-        default:
-            return Warnings.Invalid
-        }
-}
-
-function stringToCategories(str: string): Categories {
-	switch (str) {
-        case "Gen":
-            return Categories.Gen
-        case "F/M":
-            return Categories.FemaleMale
-        case "M/M":
-            return Categories.MaleMale
-        case "Other":
-            return Categories.Other
-        case "F/F":
-            return Categories.FemaleFemale
-        default:
-            return Categories.Invalid
-        }
 }
 
 async function getWork(workId: string) {
@@ -197,15 +117,15 @@ async function getWork(workId: string) {
     // collect stats
     $("div#inner dl.work.meta").find("dd").each((i, el) => {
         if ($(el).hasClass("rating")) {
-            work.rating = stringToRating($("a", el).first().text().trim())
+            work.rating = $("a", el).first().text().trim()
         } else if ($(el).hasClass("warning")) {
-            work.warnings = $("a", el).toArray().reduce((prev, curr) => {
-                return prev | stringToWarnings($(curr).text().trim());
-            }, Warnings.Invalid)
+            work.warnings = $("a", el).map((i, el) => {
+                return $(el).text().trim()
+            }).toArray()
         } else if ($(el).hasClass("category")) {
-            work.categories = $("a", el).toArray().reduce((prev, curr) => {
-                return prev | stringToCategories($(curr).text().trim());
-            }, Categories.Invalid)
+            work.categories = $("a", el).map((i, el) => {
+                return $(el).text().trim()
+            }).toArray()
         } else if ($(el).hasClass("fandom")) {
             work.fandoms = $("a", el).map((i, el) => {
                 return $(el).text().trim()
