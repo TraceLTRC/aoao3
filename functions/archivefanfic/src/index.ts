@@ -96,7 +96,9 @@ async function getWork(workId: string) {
 
     const url = `https://archiveofourown.org/works/${workId}?view_full_work=true&view_adult=true`
     const { data, status } = await axios.get<string>(url, {responseType: 'document', validateStatus: (status) => status < 500})
-    if (status != 200) {
+    if (status == 429) {
+        throw new Error("Too Many Requests!")
+    }else if (status != 200) {
         throw new Error(`Unable to fetch work! err: ${status}`)
     }
 
@@ -271,9 +273,22 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
         endpoint: `https://${process.env.OBJECT_ENDPOINT}`,
         region: process.env.OBJECT_REGION,
     })
+    
+    let fetchedDoc, fetchedContent, fetchedHash;
 
-    const {work: fetchedDoc, content: fetchedContent} = await getWork(workId)
-    const fetchedHash = fetchedDoc.contentHash.at(-1)
+    try {
+        ({work: fetchedDoc, content: fetchedContent} = await getWork(workId))
+        fetchedHash = fetchedDoc.contentHash.at(-1)
+    } catch (e) {
+        if (e instanceof Error && e.message.startsWith('Too Many')) {
+            res.sendStatus(429).end()
+        } else {
+            console.error(e);
+            res.sendStatus(500).end();
+        }
+        return
+    }
+    
     if (fetchedHash == undefined) throw new Error("Fetched doc contains no hash!")
     
     try {
@@ -290,10 +305,8 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
 
             doc.contentHash.push(fetchedHash)
 
-            await Promise.all([
-                uploadToObject(objectClient, workId, fetchedHash, fetchedContent),
-                index.updateDocuments([fetchedDoc])
-            ])
+            await uploadToObject(objectClient, workId, fetchedHash, fetchedContent),
+            await index.updateDocuments([fetchedDoc])            
 
             console.log(`Work ${workId} has been fully updated!`)
             res.sendStatus(202).end()
@@ -309,10 +322,8 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
         if (e instanceof MeiliSearchApiError && e.code == 'document_not_found') {
             // First archive
 
-            await Promise.all([
-                uploadToObject(objectClient, workId, fetchedHash, fetchedContent),
-                index.addDocuments([fetchedDoc])
-            ])
+            await uploadToObject(objectClient, workId, fetchedHash, fetchedContent),
+            await index.addDocuments([fetchedDoc])            
 
             console.log(`Work ${workId} has been archived!`)
             res.sendStatus(202).end()

@@ -82,10 +82,9 @@ func PostWorker(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client
 					log.Info.Printf("Queued archiving task for work %s", workId)
 				case 304:
 					log.Info.Printf("Work %s has already been archived recently!", workId)
-					rdb.ZAdd(context.Background(), queueKey, redis.Z{
-						Member: workId,
-						Score:  float64(time.Now().UnixMilli()),
-					})
+				case 429:
+					log.Info.Printf("Too Many Requests! Sleeping for 1 minute...")
+					time.Sleep(time.Minute * 1)
 				default:
 					log.Err.Printf("Work %s got an unexpected status code, %d", workId, resp.StatusCode)
 					rdb.ZAdd(context.Background(), queueKey, redis.Z{

@@ -24,7 +24,7 @@ const (
 
 func main() {
 	workerAmt := flag.Int("worker-amount", 25, "Amount of workers posting to the function")
-	newAmount := flag.Int("new-works", 20, "Amount of fanfics to be archived before sleeping")
+	newAmount := flag.Int("new-works", 100, "Amount of fanfics to be archived before sleeping")
 
 	flag.Parse()
 

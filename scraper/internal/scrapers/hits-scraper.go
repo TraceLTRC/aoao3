@@ -95,11 +95,13 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 			}
 
 			pageUrl := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=hits&page=%d&tag_id=", page) + url.QueryEscape(fandom)
-			err := collector.Visit(pageUrl)
-			if err != nil {
-				log.Err.Printf("Error visiting %s, %v", pageUrl, err)
+			for {
+				err = collector.Visit(pageUrl)
+				if err == nil || strings.Contains(err.Error(), "already visited") {
+					break
+				}
+				log.Err.Printf("Visiting %s failed with status %v", pageUrl, err)
 			}
-
 			page++
 		}
 	}
