@@ -296,8 +296,6 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
     }
     
     if (fetchedHash == undefined) throw new Error("Fetched doc contains no hash!")
-
-    console.log(fetchedDoc)
     
     try {
         const doc = await index.getDocument<WorkDocument>(workId)
