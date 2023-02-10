@@ -96,7 +96,20 @@ async function getWork(workId: string) {
 
     const url = `https://archiveofourown.org/works/${workId}?view_full_work=true&view_adult=true`
 
-    const $ = cheerio.load((await axios.get<string>(url, {responseType: 'document'})).data)
+    let $: cheerio.CheerioAPI
+
+    try {
+        const res = await axios.get(url, { responseType: 'document', validateStatus: status => status < 500 })
+        if (res.status == 429) {
+            throw new Error("Too Many Requests!")
+        } else if (res.status != 200) {
+            throw new Error("Unexpected error! " + res.status)
+        }
+
+        $ = cheerio.load(res.data)
+    } catch (e) {
+        throw e
+    }
 
     // Collect preface
     const prefaceEl = $("div#inner div#workskin > div.preface.group")
@@ -274,7 +287,7 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
         ({work: fetchedDoc, content: fetchedContent} = await getWork(workId))
         fetchedHash = fetchedDoc.contentHash.at(-1)
     } catch (e) {
-        if (e instanceof AxiosError && e.status == 429) {
+        if (e instanceof Error && e.message.startsWith('Too Many')) {
             res.sendStatus(429).end()
         } else {
             throw e
