@@ -311,7 +311,7 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
         if (doc.contentHash.at(-1) != fetchedHash) {
             console.log(`Work ${workId} has different hash! Updating...`)
 
-            doc.contentHash.push(fetchedHash)
+            fetchedDoc.contentHash.unshift(...doc.contentHash)
 
             await uploadToObject(objectClient, workId, fetchedHash, fetchedContent),
             await index.updateDocuments([fetchedDoc])            
