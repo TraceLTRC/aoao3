@@ -1,7 +1,7 @@
 import * as ff from '@google-cloud/functions-framework'
 import * as cheerio from 'cheerio'
 import * as zlib from 'node:zlib'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { MeiliSearch, MeiliSearchApiError } from 'meilisearch'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createHash } from 'crypto'
@@ -95,14 +95,18 @@ async function getWork(workId: string) {
     }
 
     const url = `https://archiveofourown.org/works/${workId}?view_full_work=true&view_adult=true`
-    const { data, status } = await axios.get<string>(url, {responseType: 'document', validateStatus: (status) => status < 500})
-    if (status == 429) {
-        throw new Error("Too Many Requests!")
-    }else if (status != 200) {
-        throw new Error(`Unable to fetch work! err: ${status}`)
-    }
 
-    const $ = cheerio.load(data)
+    let $: cheerio.CheerioAPI;
+
+    try {
+        $ = cheerio.load((await axios.get<string>(url, {responseType: 'document'})).data)
+    } catch (e) {
+        if (e instanceof AxiosError && e.status == 429) {
+            throw new Error("Too Many Requests!")
+        } else {
+            throw e
+        }
+    }
 
     // Collect preface
     const prefaceEl = $("div#inner div#workskin > div.preface.group")
@@ -290,6 +294,8 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
     }
     
     if (fetchedHash == undefined) throw new Error("Fetched doc contains no hash!")
+
+    console.log(fetchedDoc)
     
     try {
         const doc = await index.getDocument<WorkDocument>(workId)
