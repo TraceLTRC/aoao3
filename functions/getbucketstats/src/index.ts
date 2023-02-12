@@ -14,19 +14,6 @@ const objectClient = new S3({
     region: process.env.OBJECT_REGION,
 })
 
-// https://stackoverflow.com/questions/15900485/correct-way-to-convert-size-in-bytes-to-kb-mb-gb-in-javascript
-function formatBytes(bytes: number, decimals = 2) {
-    if (!+bytes) return '0 Bytes'
-
-    const k = 1024
-    const dm = decimals < 0 ? 0 : decimals
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
-}
-
 async function revalidateCache(data: {size: number, keys: number}) {
     await firestore.collection('cache').doc('bucketStats').set({
         value: data,
@@ -55,7 +42,7 @@ const getBucketStats = async (params: ListObjectsV2CommandInput, out = { size: 0
 }
 
 ff.http('GetBucketStats', async (_, res) => {
-    let data: { keys: number, size: string};
+    let data: { keys: number, size: number};
     const doc = await firestore.collection("cache").doc('bucketStats').get()
 
     if (doc.exists) {
@@ -77,19 +64,14 @@ ff.http('GetBucketStats', async (_, res) => {
             })
         }
     } else {
-        const { keys, size } = await getBucketStats({
+        data = await getBucketStats({
             Bucket: process.env.OBJECT_NAME
         })
 
-        revalidateCache({ keys, size })
-
-        const formattedSize = formatBytes(size)
-
-        data = {
-            keys: keys,
-            size: formattedSize
-        }
+        revalidateCache(Object.assign({}, data))
     }
+
+    
 
     res.send(data).end()
 })
