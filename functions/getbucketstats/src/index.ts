@@ -67,6 +67,8 @@ ff.http('GetBucketStats', async (_, res) => {
             console.log("Cache is stale, updating!")
             await firestore.collection('cache').doc('bucketStats').set({
                 isUpdating: true
+            }, {
+                merge: true,
             })
             getBucketStats({
                 Bucket: process.env.OBJECT_NAME
