@@ -44,7 +44,6 @@ type WorkChapter = {
 }
 
 type WorkContent = {
-    summary: string,
     beginningNotes: string,
     endingNotes: string,
     skin: string,
@@ -53,6 +52,7 @@ type WorkContent = {
 
 type Work = {
     id: string,
+    summary?: string,
 } & WorkMeta
 
 type WorkDocument = Work & ArchiveMeta
@@ -80,7 +80,7 @@ function workFactory(id: string): WorkDocument {
         warnings: [""],
         words: -1,
         contentHash: [],
-        lastChecked: Date.now()
+        lastChecked: Date.now(),
     }
 }
 
@@ -91,7 +91,6 @@ async function getWork(workId: string) {
         chapters: [],
         endingNotes: "",
         skin: "",
-        summary: "",
     }
 
     const url = `https://archiveofourown.org/works/${workId}?view_full_work=true&view_adult=true`
@@ -118,9 +117,9 @@ async function getWork(workId: string) {
     work.authors = prefaceEl.find(".byline > a[rel=\"author\"]").map((i, el) => {
         return $(el).text().trim()
     }).toArray()
+    work.summary = prefaceEl.find("div.summary").children().not("h3").html()?.trim()
     content.beginningNotes = prefaceEl.find("div.notes").children().not("h3").html()?.trim() ?? ""
     content.endingNotes = $("div#work_endnotes").children().not('h3').html()?.trim() ?? ""
-    content.summary = prefaceEl.find("div.summary").children().not("h3").html()?.trim() ?? ""
     content.skin = $("div#inner style").text().trim() ?? ""
 
     // collect stats
