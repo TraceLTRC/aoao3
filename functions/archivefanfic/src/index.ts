@@ -52,7 +52,7 @@ type WorkContent = {
 
 type Work = {
     id: string,
-    summary?: string,
+    summary: string,
 } & WorkMeta
 
 type WorkDocument = Work & ArchiveMeta
@@ -81,6 +81,7 @@ function workFactory(id: string): WorkDocument {
         words: -1,
         contentHash: [],
         lastChecked: Date.now(),
+        summary: ""
     }
 }
 
@@ -117,7 +118,7 @@ async function getWork(workId: string) {
     work.authors = prefaceEl.find(".byline > a[rel=\"author\"]").map((i, el) => {
         return $(el).text().trim()
     }).toArray()
-    work.summary = prefaceEl.find("div.summary").children().not("h3").html()?.trim()
+    work.summary = prefaceEl.find("div.summary").children().not("h3").html()?.trim() ?? ""
     content.beginningNotes = prefaceEl.find("div.notes").children().not("h3").html()?.trim() ?? ""
     content.endingNotes = $("div#work_endnotes").children().not('h3').html()?.trim() ?? ""
     content.skin = $("div#inner style").text().trim() ?? ""
