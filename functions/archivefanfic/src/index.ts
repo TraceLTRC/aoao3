@@ -1,7 +1,7 @@
 import * as ff from '@google-cloud/functions-framework'
 import * as cheerio from 'cheerio'
 import * as zlib from 'node:zlib'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import { MeiliSearch, MeiliSearchApiError } from 'meilisearch'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createHash } from 'crypto'
