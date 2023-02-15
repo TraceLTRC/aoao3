@@ -242,7 +242,7 @@ async function uploadToObject(client: S3Client, path: string, hash: string, work
     .digest('base64')
 
     const command = new PutObjectCommand({
-        Bucket: process.env.OBJECT_BUCKET_NAME,
+        Bucket: process.env.OBJECT_NAME,
         Key: `${path}/${hash}.br`,
         ContentType: 'application/json',
         ContentEncoding: 'br',
