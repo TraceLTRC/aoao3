@@ -82,7 +82,7 @@ ff.http('UpdateBucketStats', async (_, res) => {
         console.log("Updated cache!")
         res.sendStatus(200).end()
     } catch (e) {
-        console.error("Failed to update cache!")
+        console.error(e)
         res.sendStatus(500).end()
         return
     }
