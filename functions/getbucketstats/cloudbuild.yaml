@@ -5,7 +5,7 @@ steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['functions', 'deploy', 'getbucketstats', '--gen2', 
     '--allow-unauthenticated', '--trigger-http', 
-    '--runtime', 'nodejs18', '--region=europe-west3', 
+    '--runtime', 'nodejs18', '--region=europe-west4', 
     '--source=.', '--entry-point=GetBucketStats',
     '--set-secrets=OBJECT_SECRET_KEY=${_OBJECT_SECRET_KEY_ID}:${_OBJECT_SECRET_KEY_VERSION}',
     '--set-env-vars=OBJECT_ACCESS_KEY=${_OBJECT_ACCESS_KEY},OBJECT_REGION=${_OBJECT_REGION},OBJECT_NAME=${_OBJECT_NAME},OBJECT_ENDPOINT=${_OBJECT_ENDPOINT}']

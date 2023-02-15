@@ -3,5 +3,5 @@ steps:
   args: ['install']
   dir: 'functions/archivefanfic'
 - name: 'gcr.io/cloud-builders/gcloud'
-  args: ['functions', 'deploy', 'archivefanfic', '--gen2', '--trigger-http', '--runtime', 'nodejs18', '--region=europe-west3', '--source=.', '--entry-point=ArchiveFanfic']
+  args: ['functions', 'deploy', 'archivefanfic', '--gen2', '--trigger-http', '--runtime', 'nodejs18', '--region=europe-west4', '--source=.', '--entry-point=ArchiveFanfic']
   dir: 'functions/archivefanfic'

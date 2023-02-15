@@ -4,7 +4,7 @@ steps:
   dir: 'functions/getarchive'
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['functions', 'deploy', 'getarchive', '--gen2', 
-    '--trigger-http', '--runtime', 'nodejs18', '--region=europe-west3', 
+    '--trigger-http', '--runtime', 'nodejs18', '--region=europe-west4', 
     '--allow-unauthenticated', '--source=.', '--entry-point=GetArchive',
     '--set-secrets=OBJECT_SECRET_KEY=${_OBJECT_SECRET_KEY_ID}:${_OBJECT_SECRET_KEY_VERSION},SEARCH_API_KEY=${_SEARCH_API_KEY_ID}:${_SEARCH_API_KEY_VERSION}',
     '--set-env-vars=OBJECT_ACCESS_KEY=${_OBJECT_ACCESS_KEY},OBJECT_REGION=${_OBJECT_REGION},OBJECT_NAME=${_OBJECT_NAME},OBJECT_ENDPOINT=${_OBJECT_ENDPOINT},SEARCH_DOMAIN=${_SEARCH_DOMAIN}']
