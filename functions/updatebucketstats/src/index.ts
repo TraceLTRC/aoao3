@@ -17,8 +17,6 @@ const objectClient = new S3({
 async function revalidateCache(data: {size: number, keys: number}) {
     await firestore.collection('cache').doc('bucketStats').set({
         value: data,
-        ttl: Date.now() + (24 * 60 * 60 * 1000),
-        isUpdating: false
     })
 }
 
