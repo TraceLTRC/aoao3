@@ -46,22 +46,16 @@ ff.http('GetBucketStats', async (_, res) => {
     const doc = await firestore.collection("cache").doc('bucketStats').get()
 
     if (doc.exists) {
-        data = doc.get('value')
-        
         const ttl = doc.get('ttl')
-        const isUpdating = doc.get('isUpdating')
-        if (ttl < Date.now() && !isUpdating) {
+        if (ttl < Date.now()) {
             console.log("Cache is stale, updating!")
-            await firestore.collection('cache').doc('bucketStats').set({
-                isUpdating: true
-            }, {
-                merge: true,
-            })
-            getBucketStats({
+            
+            data = await getBucketStats({
                 Bucket: process.env.OBJECT_NAME
-            }).then((val) => {
-                revalidateCache(val)
             })
+            await revalidateCache(data)
+        } else {
+            data = doc.get('value')
         }
     } else {
         data = await getBucketStats({
@@ -70,8 +64,6 @@ ff.http('GetBucketStats', async (_, res) => {
 
         revalidateCache(Object.assign({}, data))
     }
-
-    
 
     res.send(data).end()
 })
