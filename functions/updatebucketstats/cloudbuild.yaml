@@ -4,7 +4,7 @@ steps:
   dir: 'functions/updatebucketstats'
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['functions', 'deploy', 'updatebucketstats', '--gen2', '--trigger-http', 
-    '--runtime', 'nodejs18', '--region=europe-west4', 
+    '--runtime', 'nodejs18', '--region=europe-west4', '--memory=${_FUNCTION_MEMORY}', '--timeout=${_FUNCTION_TIMEOUT}',
     '--source=.', '--entry-point=UpdateBucketStats',
     '--set-secrets=OBJECT_SECRET_KEY=${_OBJECT_SECRET_KEY_ID}:${_OBJECT_SECRET_KEY_VERSION}',
     '--set-env-vars=OBJECT_ACCESS_KEY=${_OBJECT_ACCESS_KEY},OBJECT_REGION=${_OBJECT_REGION},OBJECT_NAME=${_OBJECT_NAME},OBJECT_ENDPOINT=${_OBJECT_ENDPOINT}']
