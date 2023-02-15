@@ -41,7 +41,7 @@ const getBucketStats = async (params: ListObjectsV2CommandInput, out = { size: 0
     return out
 }
 
-ff.http('updateBucketStats', async (req, res) => {
+ff.http('UpdateBucketStats', async (req, res) => {
     try {
         await revalidateCache(await getBucketStats({
             Bucket: process.env.OBJECT_NAME
