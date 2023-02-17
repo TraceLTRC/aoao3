@@ -54,10 +54,25 @@ ff.http('UpdateTagCompletion', async (req, res) => {
         docs.hits.forEach((doc) => appendTags(doc))
     }
 
-    await search.index('relationships').updateDocuments([...relationships].map((val) => { return {key: val} }))
-    await search.index('characters').updateDocuments([...characters].map((val) => { return {key: val} }))
-    await search.index('fandoms').updateDocuments([...fandoms].map((val) => { return {key: val} }))
-    await search.index('tags').updateDocuments([...tags].map((val) => { return {key: val} }))
+    const relationshipArray = [...relationships].map((val) => { return {key: val} })
+    for (let i = 0; i < relationshipArray.length; i += 10000) {
+        await search.index('relationships').updateDocuments(relationshipArray.slice(i, 10000))
+    }
+
+    const characterArray = [...characters].map((val) => { return {key: val} })
+    for (let i = 0; i < characterArray.length; i += 10000) {
+        await search.index('characters').updateDocuments(characterArray.slice(i, 10000))
+    }
+
+    const fandomArray = [...fandoms].map((val) => { return {key: val} })
+    for (let i = 0; i < fandomArray.length; i += 10000) {
+        await search.index('fandoms').updateDocuments(fandomArray.slice(i, 10000))
+    }
+
+    const tagArray = [...tags].map((val) => { return {key: val} })
+    for (let i = 0; i < tagArray.length; i += 10000) {
+        await search.index('tags').updateDocuments(tagArray.slice(i, 10000))
+    }
 
     res.sendStatus(200).end()
 })
