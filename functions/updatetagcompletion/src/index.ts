@@ -1,6 +1,7 @@
 import { MeiliSearch } from 'meilisearch'
 import * as ff from '@google-cloud/functions-framework'
 import * as admin from 'firebase-admin'
+import crypto from 'node:crypto'
 import { Hit } from 'meilisearch/dist/types/types'
 
 admin.initializeApp()
@@ -54,22 +55,22 @@ ff.http('UpdateTagCompletion', async (req, res) => {
         docs.hits.forEach((doc) => appendTags(doc))
     }
 
-    const relationshipArray = [...relationships].map((val) => { return {key: val} })
+    const relationshipArray = [...relationships].map((val) => { return {key: crypto.createHash('md5').update(val).digest('hex'), value: val} })
     for (let i = 0; i < relationshipArray.length; i += 10000) {
         await search.index('relationships').updateDocuments(relationshipArray.slice(i, i + 10000))
     }
 
-    const characterArray = [...characters].map((val) => { return {key: val} })
+    const characterArray = [...characters].map((val) => { return {key: crypto.createHash('md5').update(val).digest('hex'), value: val} })
     for (let i = 0; i < characterArray.length; i += 10000) {
         await search.index('characters').updateDocuments(characterArray.slice(i, i + 10000))
     }
 
-    const fandomArray = [...fandoms].map((val) => { return {key: val} })
+    const fandomArray = [...fandoms].map((val) => { return {key: crypto.createHash('md5').update(val).digest('hex'), value: val} })
     for (let i = 0; i < fandomArray.length; i += 10000) {
         await search.index('fandoms').updateDocuments(fandomArray.slice(i, i + 10000))
     }
 
-    const tagArray = [...tags].map((val) => { return {key: val} })
+    const tagArray = [...tags].map((val) => { return {key: crypto.createHash('md5').update(val).digest('hex'), value: val} })
     console.log(tagArray)
     for (let i = 0; i < tagArray.length; i += 10000) {
         await search.index('tags').updateDocuments(tagArray.slice(i, i + 10000))
