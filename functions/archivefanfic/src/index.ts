@@ -6,9 +6,11 @@ import { MeiliSearch, MeiliSearchApiError } from 'meilisearch'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createHash } from 'crypto'
 
+type contentHashArray = [number, string]
+
 type ArchiveMeta = {
     lastChecked: number,
-    contentHash: string[],
+    contentHash: contentHashArray[],
 }
 
 type WorkStats = {
@@ -221,7 +223,7 @@ async function getWork(workId: string) {
                 .update(JSON.stringify(content))
                 .digest('hex')
 
-    work.contentHash.push(hash)
+    work.contentHash.push([Date.now(), hash])
 
     if (work.hits == -1 || work.title == "") {
         throw new Error("Title and hits were not touched, is AO3 Down?")
@@ -285,7 +287,7 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
 
     try {
         ({work: fetchedDoc, content: fetchedContent} = await getWork(workId))
-        fetchedHash = fetchedDoc.contentHash.at(-1)
+        fetchedHash = fetchedDoc.contentHash.at(-1)?.[1]
     } catch (e) {
         if (e instanceof Error && e.message.startsWith('Too Many')) {
             res.sendStatus(429).end()
@@ -306,7 +308,12 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
             return;
         }
 
-        if (doc.contentHash.at(-1) != fetchedHash) {
+        const latestHash = doc.contentHash.at(-1)?.[1]
+        if (latestHash == undefined) {
+            throw new Error(`Work ${workId} has invalid contenthash form!`)
+        }
+
+        if (latestHash != fetchedHash) {
             console.log(`Work ${workId} has different hash! Updating...`)
 
             fetchedDoc.contentHash.unshift(...doc.contentHash)
