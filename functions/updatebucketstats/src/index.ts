@@ -24,14 +24,13 @@ async function revalidateCache(data: {size: number, keys: number, words: number}
     await firestore.collection('cache').doc('bucketStats').set(data)
 }
 
-const getBucketStats = async (params: ListObjectsV2CommandInput, out = { size: 0, keys: 0 }): Promise<{ size: number, keys: number }> => {
+const getBucketStats = async (params: ListObjectsV2CommandInput, out = { size: 0 }): Promise<{ size: number }> => {
     const res = await objectClient.listObjectsV2(params)
 
     if (res.Contents == undefined) {
         return out
     }
     
-    out.keys += res.Contents.length
     out.size += res.Contents.reduce((prev, curr) => {
         return prev + (curr.Size ?? 0)
     }, 0)
@@ -63,7 +62,8 @@ const getSearchStats = async () => {
     }
 
     return {
-        words
+        words,
+        totalFics
     }
 }
 
@@ -74,8 +74,8 @@ ff.http('UpdateBucketStats', async (_, res) => {
         }), getSearchStats()])
 
         await revalidateCache({
-            keys: stats[0].keys,
             size: stats[0].size,
+            keys: stats[1].totalFics,
             words: stats[1].words,
         })
 
