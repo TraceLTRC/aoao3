@@ -21,7 +21,9 @@ const searchClient = new MeiliSearch({
 })
 
 async function revalidateCache(data: {size: number, keys: number, words: number}) {
-    await firestore.collection('cache').doc('bucketStats').set(data)
+    await firestore.collection('cache').doc('bucketStats').set(data, {
+        merge: true
+    })
 }
 
 const getBucketStats = async (params: ListObjectsV2CommandInput, out = { size: 0 }): Promise<{ size: number }> => {
@@ -73,11 +75,15 @@ ff.http('UpdateBucketStats', async (_, res) => {
             Bucket: process.env.OBJECT_NAME,
         }), getSearchStats()])
 
-        await revalidateCache({
+        const objStats = {
             size: stats[0].size,
             keys: stats[1].totalFics,
             words: stats[1].words,
-        })
+        }
+
+        console.log(objStats)
+
+        await revalidateCache(objStats)
 
         console.log("Updated cache!")
         res.sendStatus(200).end()
