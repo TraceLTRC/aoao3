@@ -1,0 +1,11 @@
+steps:
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
+  dir: 'functions/updatetagcompletion'
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['functions', 'deploy', 'updatetagcompletion', '--gen2', '--trigger-http', 
+    '--runtime', 'nodejs18', '--region=europe-west4', '--memory=${_FUNCTION_MEMORY}', '--timeout=${_FUNCTION_TIMEOUT}',
+    '--source=.', '--entry-point=UpdateTagCompletion',
+    '--set-secrets=SEARCH_API_KEY=${_SEARCH_API_KEY_ID}:${_SEARCH_API_KEY_VERSION}',
+    '--set-env-vars=SEARCH_ENDPOINT=${_SEARCH_ENDPOINT}']
+  dir: 'functions/updatetagcompletion'
