@@ -56,23 +56,28 @@ ff.http('UpdateTagCompletion', async (req, res) => {
 
     const relationshipArray = [...relationships].map((val) => { return {key: val} })
     for (let i = 0; i < relationshipArray.length; i += 10000) {
-        await search.index('relationships').updateDocuments(relationshipArray.slice(i, 10000))
+        await search.index('relationships').updateDocuments(relationshipArray.slice(i, i + 10000))
     }
 
     const characterArray = [...characters].map((val) => { return {key: val} })
     for (let i = 0; i < characterArray.length; i += 10000) {
-        await search.index('characters').updateDocuments(characterArray.slice(i, 10000))
+        await search.index('characters').updateDocuments(characterArray.slice(i, i + 10000))
     }
 
     const fandomArray = [...fandoms].map((val) => { return {key: val} })
     for (let i = 0; i < fandomArray.length; i += 10000) {
-        await search.index('fandoms').updateDocuments(fandomArray.slice(i, 10000))
+        await search.index('fandoms').updateDocuments(fandomArray.slice(i, i + 10000))
     }
 
     const tagArray = [...tags].map((val) => { return {key: val} })
+    console.log(tagArray)
     for (let i = 0; i < tagArray.length; i += 10000) {
-        await search.index('tags').updateDocuments(tagArray.slice(i, 10000))
+        await search.index('tags').updateDocuments(tagArray.slice(i, i + 10000))
     }
+
+    await firestore.collection('cache').doc('tagCompletion').set({ lastChecked: Date.now() }, {
+        merge: true
+    })
 
     res.sendStatus(200).end()
 })
