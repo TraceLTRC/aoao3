@@ -28,7 +28,7 @@ class TagSets {
             return {
                 key: crypto.createHash('md5').update(key).digest('hex'),
                 value: key,
-                frequency: this.set.key
+                frequency: this.set[key]
             }
         })
     }
