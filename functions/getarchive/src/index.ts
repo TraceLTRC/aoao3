@@ -85,7 +85,7 @@ ff.http('GetArchive', async (req, res) => {
 
     if (contentHash === undefined) {
         try {
-            const searchIndex = await searchClient.getIndex("archives")
+            const searchIndex = searchClient.index("archives")
             const doc = await searchIndex.getDocument(workId, {
                 fields: ["contentHash"]
             })

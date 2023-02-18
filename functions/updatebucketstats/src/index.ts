@@ -45,7 +45,7 @@ const getBucketStats = async (params: ListObjectsV2CommandInput, out = { size: 0
 }
 
 const getSearchStats = async () => {
-    const index = await searchClient.getIndex('archives')
+    const index = searchClient.index('archives')
 
     const totalFics = (await index.getStats()).numberOfDocuments
 

@@ -272,7 +272,7 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
         apiKey: process.env.SEARCH_API_KEY,
     });
 
-    const index = await searchClient.getIndex('archives')
+    const index = searchClient.index('archives')
 
     const objectClient = new S3Client({
         credentials: {

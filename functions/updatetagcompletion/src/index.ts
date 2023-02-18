@@ -45,33 +45,17 @@ ff.http('UpdateTagCompletion', async (_, res) => {
         doc.fandoms.forEach((i: string) => fandoms.add(i))
     }
 
-    const lastChecked = (await firestore.collection('cache').doc('tagCompletion').get()).get('lastChecked') as number | undefined
+    const maxDocs = (await archive.getStats()).numberOfDocuments
 
-    if (lastChecked == undefined) {
-        const maxDocs = (await archive.getStats()).numberOfDocuments
-
-        for (let i = 0; i < maxDocs; i += 10000) {
-            const docs = await archive.getDocuments({
-                fields: ["relationships", "characters", "tags", "fandoms"],
-                offset: i,
-                limit: 10000
-            })
-    
-            docs.results.forEach(doc => appendTags(doc))
-            console.log(i)
-        }
-    } else {
-        const docs = (await archive.search(undefined, {
-            filter: [`lastChecked > ${lastChecked}`],
-            attributesToRetrieve: ["relationships", "characters", "tags", "fandoms"],
+    for (let i = 0; i < maxDocs; i += 10000) {
+        const docs = await archive.getDocuments({
+            fields: ["relationships", "characters", "tags", "fandoms"],
+            offset: i,
             limit: 10000
-        }))
+        })
 
-        if ((docs.estimatedTotalHits ?? 10000) >= 10000) {
-            console.error("Search limit reached!")
-        }
-
-        docs.hits.forEach((doc) => appendTags(doc))
+        docs.results.forEach(doc => appendTags(doc))
+        console.log(i)
     }
 
     const relationshipArray = relationships.export()
