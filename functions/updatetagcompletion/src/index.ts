@@ -1,11 +1,7 @@
 import { MeiliSearch } from 'meilisearch'
 import * as ff from '@google-cloud/functions-framework'
-import * as admin from 'firebase-admin'
 import crypto from 'node:crypto'
 import { Hit } from 'meilisearch/dist/types/types'
-
-admin.initializeApp()
-const firestore = admin.firestore()
 
 const search = new MeiliSearch({
     host: `https://${process.env.SEARCH_ENDPOINT}`,
@@ -78,10 +74,6 @@ ff.http('UpdateTagCompletion', async (_, res) => {
     for (let i = 0; i < tagArray.length; i += 10000) {
         await search.index('tags').updateDocuments(tagArray.slice(i, i + 10000))
     }
-
-    await firestore.collection('cache').doc('tagCompletion').set({ lastChecked: Date.now() }, {
-        merge: true
-    })
 
     res.sendStatus(200).end()
 })
