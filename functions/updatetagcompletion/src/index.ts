@@ -17,9 +17,9 @@ class TagSets {
 
     add(item: string) {
         if (Object.keys(this.set).includes(item)) {
-            this.set.item++;
+            this.set[item]++;
         } else {
-            this.set.item = 1;
+            this.set[item] = 1
         }
     }
 
