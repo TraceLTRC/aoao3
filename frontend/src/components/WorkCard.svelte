@@ -1,0 +1,72 @@
+<script lang="ts">
+	import type { WorkDocument } from '../types';
+	import PictureTags from './PictureTags.svelte';
+	import DOMPurify from 'isomorphic-dompurify';
+
+	export let work: WorkDocument;
+</script>
+
+<div class="w-full md:w-[calc(50%-1rem)] p-2 mb-3 border border-zinc-200 bg-zinc-800 flex flex-col">
+	<div class="flex flex-row mb-2 max-w-full">
+		<PictureTags
+			chapter={[work.currChapter, work.maxChapter]}
+			rating={work.rating}
+			warning={work.warnings}
+			category={work.categories}
+			class="mr-2"
+		/>
+		<div class="flex flex-col gap-1 break-words">
+			<h4 class="leading-tight">
+				<a class="text-blue-400 hover:underline" href={'/work/' + work.id}>{work.title}</a>
+				by {work.authors.join(', ')}
+			</h4>
+			<div class="text-sm flex flex-wrap gap-x-1">
+				{#each work.fandoms as fandom, i}
+					<a
+						class="decoration-dotted underline hover:bg-zinc-600"
+						href={'/search?fandom=' + encodeURIComponent(fandom)}>{fandom}</a
+					>
+				{/each}
+			</div>
+		</div>
+	</div>
+	<div class="text-sm flex flex-wrap gap-x-1">
+		{#each work.warnings as warning}
+			<a
+				class="font-bold decoration-dotted underline pr-0.5 word-break hover:bg-zinc-600"
+				href={'/search?warning=' + encodeURIComponent(warning)}>{warning}</a
+			>
+		{/each}
+		{#each work.relationships as relationship}
+			<a
+				class="decoration-dotted underline pr-0.5 word-break hover:bg-zinc-600"
+				href={'/search?relationship=' + encodeURIComponent(relationship)}>{relationship}</a
+			>
+		{/each}
+		{#each work.characters as character}
+			<a
+				class="decoration-dotted underline pr-0.5 word-break hover:bg-zinc-600"
+				href={'/search?character=' + encodeURIComponent(character)}>{character}</a
+			>
+		{/each}
+		{#each work.tags as tag}
+			<a
+				class="decoration-dotted underline pr-0.5 word-break hover:bg-zinc-600"
+				href={'/search?tag=' + encodeURIComponent(tag)}>{tag}</a
+			>
+		{/each}
+	</div>
+	<div
+		class="w-full h-full mt-4 my-2 pr-1 prose prose-sm xl:prose-base prose-zinc !prose-invert max-w-none prose-a:text-white word-break"
+	>
+		{@html DOMPurify.sanitize(work.summary)}
+	</div>
+	<div class="flex flex-row flex-wrap gap-x-2 gap-y-1 text-sm justify-end items-stretch pl-4 pr-2">
+		<span>Language: {work.language}</span>
+		<span>Words: {work.words}</span>
+		<span>Chapters: {work.currChapter}/{work.maxChapter}</span>
+		<span>Kudos: {work.kudos}</span>
+		<span>Bookmarks: {work.bookmarks}</span>
+		<span>Hits: {work.hits}</span>
+	</div>
+</div>

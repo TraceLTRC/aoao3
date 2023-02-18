@@ -2,7 +2,16 @@
 module.exports = {
   content: ['./src/**/*.{html,js,svelte,ts}'],
   theme: {
-    extend: {},
+    extend: {
+      boxShadow: {
+        'total': '0 0 0 1000px rgba(0, 0, 0, 0.35)'
+      },
+      content: {
+        'comma': ', '
+      }
+    },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }
