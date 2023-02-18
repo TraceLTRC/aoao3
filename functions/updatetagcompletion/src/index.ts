@@ -16,11 +16,7 @@ class TagSets {
     set: { [key: string]: number} = {}
 
     add(item: string) {
-        if (Object.keys(this.set).includes(item)) {
-            this.set[item]++;
-        } else {
-            this.set[item] = 1
-        }
+        this.set[item] = this.set[item] ? ++this.set[item] : 1
     }
 
     export() {
@@ -34,7 +30,7 @@ class TagSets {
     }
 }
 
-ff.http('UpdateTagCompletion', async (req, res) => {
+ff.http('UpdateTagCompletion', async (_, res) => {
     const archive = search.index('archives')
 
     const relationships = new TagSets()
@@ -62,6 +58,7 @@ ff.http('UpdateTagCompletion', async (req, res) => {
             })
     
             docs.results.forEach(doc => appendTags(doc))
+            console.log(i)
         }
     } else {
         const docs = (await archive.search(undefined, {
