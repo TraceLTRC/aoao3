@@ -12,13 +12,35 @@ const search = new MeiliSearch({
     apiKey: process.env.SEARCH_API_KEY ?? ""
 })
 
+class TagSets {
+    set: { [key: string]: number} = {}
+
+    add(item: string) {
+        if (Object.keys(this.set).includes(item)) {
+            this.set.item++;
+        } else {
+            this.set.item = 1;
+        }
+    }
+
+    export() {
+        return Object.keys(this.set).map((key) => {
+            return {
+                key: crypto.createHash('md5').update(key).digest('hex'),
+                value: key,
+                frequency: this.set.key
+            }
+        })
+    }
+}
+
 ff.http('UpdateTagCompletion', async (req, res) => {
     const archive = search.index('archives')
 
-    const relationships = new Set<string>()
-    const characters = new Set<string>()
-    const tags = new Set<string>()
-    const fandoms = new Set<string>()
+    const relationships = new TagSets()
+    const characters = new TagSets()
+    const tags = new TagSets()
+    const fandoms = new TagSets()
 
     function appendTags(doc: Hit<Record<string, any>>) {
         doc.characters.forEach((i: string) => characters.add(i))
@@ -55,22 +77,22 @@ ff.http('UpdateTagCompletion', async (req, res) => {
         docs.hits.forEach((doc) => appendTags(doc))
     }
 
-    const relationshipArray = [...relationships].map((val) => { return {key: crypto.createHash('md5').update(val).digest('hex'), value: val} })
+    const relationshipArray = relationships.export()
     for (let i = 0; i < relationshipArray.length; i += 10000) {
         await search.index('relationships').updateDocuments(relationshipArray.slice(i, i + 10000))
     }
 
-    const characterArray = [...characters].map((val) => { return {key: crypto.createHash('md5').update(val).digest('hex'), value: val} })
+    const characterArray = characters.export()
     for (let i = 0; i < characterArray.length; i += 10000) {
         await search.index('characters').updateDocuments(characterArray.slice(i, i + 10000))
     }
 
-    const fandomArray = [...fandoms].map((val) => { return {key: crypto.createHash('md5').update(val).digest('hex'), value: val} })
+    const fandomArray = fandoms.export()
     for (let i = 0; i < fandomArray.length; i += 10000) {
         await search.index('fandoms').updateDocuments(fandomArray.slice(i, i + 10000))
     }
 
-    const tagArray = [...tags].map((val) => { return {key: crypto.createHash('md5').update(val).digest('hex'), value: val} })
+    const tagArray = tags.export()
     console.log(tagArray)
     for (let i = 0; i < tagArray.length; i += 10000) {
         await search.index('tags').updateDocuments(tagArray.slice(i, i + 10000))
