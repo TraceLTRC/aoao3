@@ -4,7 +4,7 @@
 		<p>
 			This site does not claim ownership or rights to any of the work that it archives.
 			<br />
-			All rights of any works this site archives goes to their respective authors or creators.
+			All rights of any works this site archives goes to their respective authors and/or creators.
 		</p>
 	</div>
 </footer>

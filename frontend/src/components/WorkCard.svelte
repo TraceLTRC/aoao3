@@ -6,7 +6,9 @@
 	export let work: WorkDocument;
 </script>
 
-<div class="w-full md:w-[calc(50%-1rem)] p-2 mb-3 border border-zinc-200 bg-zinc-800 flex flex-col">
+<div
+	class="text-[#d4d4d8] w-full md:w-[calc(50%-1rem)] p-2 mb-3 border border-zinc-200 bg-zinc-800 flex flex-col"
+>
 	<div class="flex flex-row mb-2 max-w-full">
 		<PictureTags
 			chapter={[work.currChapter, work.maxChapter]}
@@ -61,7 +63,9 @@
 	>
 		{@html DOMPurify.sanitize(work.summary)}
 	</div>
-	<div class="flex flex-row flex-wrap gap-x-2 gap-y-1 text-sm justify-end items-stretch pl-4 pr-2">
+	<div
+		class="flex flex-row flex-wrap gap-x-2 gap-y-1 text-sm justify-end items-stretch mt-3 mr-2 mb-2"
+	>
 		<span>Language: {work.language}</span>
 		<span>Words: {work.words}</span>
 		<span>Chapters: {work.currChapter}/{work.maxChapter}</span>
