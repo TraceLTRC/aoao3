@@ -255,6 +255,20 @@ async function uploadToObject(client: S3Client, path: string, hash: string, work
     return await client.send(command)
 }
 
+const objectClient = new S3Client({
+    credentials: {
+        accessKeyId: process.env.OBJECT_ACCESS_KEY ?? "",
+        secretAccessKey: process.env.OBJECT_SECRET_KEY ?? ""
+    },
+    endpoint: `https://${process.env.OBJECT_ENDPOINT}`,
+    region: process.env.OBJECT_REGION,
+})
+
+const searchClient = new MeiliSearch({
+    host: `https://${process.env.SEARCH_DOMAIN}`,
+    apiKey: process.env.SEARCH_API_KEY,
+});
+
 ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
     if (req.body == null || req.body.workId == null) {
         res.status(400).end()
@@ -267,21 +281,7 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
     }
     const workId = req.body.workId as string
 
-    const searchClient = new MeiliSearch({
-        host: `https://${process.env.SEARCH_DOMAIN}`,
-        apiKey: process.env.SEARCH_API_KEY,
-    });
-
     const index = searchClient.index('archives')
-
-    const objectClient = new S3Client({
-        credentials: {
-            accessKeyId: process.env.OBJECT_ACCESS_KEY ?? "",
-            secretAccessKey: process.env.OBJECT_SECRET_KEY ?? ""
-        },
-        endpoint: `https://${process.env.OBJECT_ENDPOINT}`,
-        region: process.env.OBJECT_REGION,
-    })
     
     let fetchedDoc, fetchedContent, fetchedHash;
 
