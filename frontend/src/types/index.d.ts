@@ -4,9 +4,11 @@ export type Category = "F/F" | "M/M" | "F/M" | "Gen" | "Multi" | "Other"
 
 export type Warning = "Creator Chose Not To Use Archive Warnings" | "Graphic Depictions Of Violence" | "Major Character Death" | "No Archive Warnings Apply" | "Rape/Non-Con" | "Underage"
 
+type contentHashArray = [number, string]
+
 export type ArchiveMeta = {
     lastChecked: number,
-    contentHash: string[],
+    contentHash: contentHashArray[],
 }
 
 export type WorkStats = {

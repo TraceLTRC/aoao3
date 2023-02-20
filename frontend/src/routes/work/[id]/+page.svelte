@@ -1,6 +1,8 @@
 <script lang="ts">
 	import DOMPurify from 'isomorphic-dompurify';
+	import { page } from '$app/stores';
 	import type { PageData } from './$types';
+	import PageSelector from '../../../components/PageSelector.svelte';
 
 	export let data: PageData;
 
@@ -15,9 +17,11 @@
 			date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth() + 1
 		}-${date.getDate()}`;
 	}
+
+	let chapter = 1;
 </script>
 
-<div class="w-full min-h-min text-sm md:text-base">
+<div class="w-full min-h-min text-sm lg:text-base">
 	<dl
 		class="mx-3 my-4 px-3 py-2 md:mx-8 lg:mx-16 xl:mx-24 border border-sky-400 bg-zinc-800 shadow-md shadow-zinc-500 flex flex-col items-start md:flex-row md:flex-wrap"
 	>
@@ -149,4 +153,41 @@
 			</dl>
 		</dd>
 	</dl>
+	<div id="workskin" class="flex flex-col gap-y-4 pt-4 text-[#d4d4d8] items-center">
+		<div class="flex flex-col">
+			<h1 class="text-2xl text-center">{data.title}</h1>
+			{#if data.authors.length}
+				<h3 class="flex flex-row justify-center items-center">
+					{#each data.authors as author}
+						<a class="text-base md:text-lg" href="/search?author={author}">{author}</a>
+					{/each}
+				</h3>
+			{/if}
+			{#if data.summary}
+				<div class="flex flex-col mt-4 gap-y-1 mx-8">
+					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Summary:</h5>
+					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
+						{@html DOMPurify.sanitize(data.summary)}
+					</div>
+				</div>
+			{/if}
+			{#if data.content.beginningNotes}
+				<div class="flex flex-col mt-4 gap-y-1 mx-8 border-b border-white pb-6">
+					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
+					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
+						{@html DOMPurify.sanitize(data.content.beginningNotes)}
+					</div>
+					{#if data.content.endingNotes}
+						<p>
+							See the end of the work for <a
+								class="underline text-white"
+								href="{$page.url.pathname}#ending-notes">more notes.</a
+							>
+						</p>
+					{/if}
+				</div>
+			{/if}
+		</div>
+		<PageSelector maxPage={data.maxChapter} />
+	</div>
 </div>
