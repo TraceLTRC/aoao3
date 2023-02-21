@@ -1,10 +1,11 @@
 import type { PageLoad } from "./$types";
 import type { WorkContent, WorkDocument } from "../../../types";
+import { PUBLIC_BUCKET_ENDPOINT } from "$env/static/public";
 
 export const load: PageLoad = async ({fetch, params}) => {
     const workDoc = await (await fetch('/api/get-doc?work=' + encodeURIComponent(params.id))).json() as WorkDocument
 
-    const workContentRes = await fetch('https://pub-a3842e551d9f42ccb31e6b6f3606ecae.r2.dev/' + params.id + '/' + workDoc.contentHash.at(-1)?.[1] + '.br')
+    const workContentRes = await fetch('' + params.id + '/' + workDoc.contentHash.at(-1)?.[1] + '.br')
 
     return {
         ...workDoc,
