@@ -157,11 +157,19 @@
 		<div class="flex flex-col items-stretch">
 			<h1 class="text-2xl text-center">{data.title}</h1>
 			{#if data.authors.length}
-				<h3 class="flex flex-row justify-center items-center">
+				<h3 class="flex flex-row justify-center items-center gap-x-1">
 					{#each data.authors as author}
-						<a class="text-base md:text-lg" href="/search?author={author}">{author}</a>
+						<a
+							class="text-base md:text-lg decoration-dotted underline hover:bg-zinc-500 after:content-[','] after:last:content-['']"
+							href="/search?author={author}">{author}</a
+						>
 					{/each}
 				</h3>
+			{:else}
+				<span>by</span>
+				<a href="/search?author=anonymous" class="hover:bg-zinc-500 decoration-dotted underline">
+					Anonymous
+				</a>
 			{/if}
 			{#if data.summary}
 				<div class="flex flex-col mt-4 gap-y-1 mx-8">

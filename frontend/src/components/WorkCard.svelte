@@ -20,9 +20,23 @@
 			class="mr-2"
 		/>
 		<div class="flex flex-col gap-1 break-words">
-			<h4 class="leading-tight">
+			<h4 class="leading-tight flex flex-row gap-x-1 flex-wrap">
 				<a class="text-blue-400 hover:underline" href={'/work/' + work.id}>{work.title}</a>
-				by {work.authors.join(', ')}
+				{#if work.authors.length}
+					<span>by</span>
+					{#each work.authors as author}
+						<a
+							href="/search?author={encodeURIComponent(author)}"
+							class="after:content-[',_'] after:last:content-[''] hover:bg-zinc-500 decoration-dotted underline"
+							>{author}</a
+						>
+					{/each}
+				{:else}
+					<span>by</span>
+					<a href="/search?author=anonymous" class="hover:bg-zinc-500 decoration-dotted underline">
+						Anonymous
+					</a>
+				{/if}
 			</h4>
 			<div class="text-sm flex flex-wrap gap-x-1">
 				{#each work.fandoms as fandom, i}

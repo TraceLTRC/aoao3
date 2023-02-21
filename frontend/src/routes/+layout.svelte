@@ -13,7 +13,7 @@
 	<meta name="robots" content="nosnippet" />
 </svelte:head>
 
-<div class="w-screen min-h-screen bg-zinc-900 text-white overflow-hidden">
+<div class="w-screen min-h-screen bg-zinc-900 text-white">
 	{#if $navigating}
 		<PreloadingIndicator />
 	{/if}
