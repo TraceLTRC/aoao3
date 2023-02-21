@@ -1,7 +1,8 @@
+import { PUBLIC_BUCKET_STATS_ENDPOINT } from "$env/static/public";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async () => {
-    const stats = await (await fetch(process.env['PUBLIC_BUCKET_STATS_ENDPOINT'] ?? "")).json() as {
+    const stats = await (await fetch(PUBLIC_BUCKET_STATS_ENDPOINT ?? "")).json() as {
         [keys: string]: string
     }
 
