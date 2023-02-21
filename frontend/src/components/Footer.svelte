@@ -1,6 +1,6 @@
 <footer class="w-full text-zinc-500 text-sm text-center flex items-center justify-center py-12">
 	<div class="flex flex-col h-full w-4/5 xl:w-2/5">
-		<p class="mb-3">Written by STRCH, with 🍝.</p>
+		<p class="mb-3">Website written by STRCH, with 🍝.</p>
 		<p>
 			This site does not claim ownership or rights to any of the work that it archives.
 			<br />
