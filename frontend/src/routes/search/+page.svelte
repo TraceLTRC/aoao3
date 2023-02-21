@@ -8,4 +8,4 @@
 	});
 </script>
 
-<div>search</div>
+<div>Hello, world!</div>
