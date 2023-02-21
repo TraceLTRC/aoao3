@@ -48,14 +48,16 @@
 		}
 	}}
 	on:touchstart={(e) => {
+		if (secondary) return;
+
 		touchStartX = e.changedTouches[0].screenX;
 	}}
 	on:touchend={(e) => {
 		touchEndX = e.changedTouches[0].screenX;
 		if (touchEndX > touchStartX) {
-			goNextPage();
+			alert('You swiped ' + (touchEndX - touchStartX));
 		} else if (touchEndX < touchStartX) {
-			goPrevPage();
+			alert('You swiped ' + (touchEndX - touchStartX));
 		}
 	}}
 />
