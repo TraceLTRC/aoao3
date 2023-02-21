@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { PUBLIC_BUCKET_ENDPOINT, PUBLIC_SEARCH_BEARER } from '$env/static/public';
 	import { onMount } from 'svelte';
 	import WorkCard from '../components/WorkCard.svelte';
 	import { formatBytes } from '../utils';
@@ -10,11 +9,6 @@
 	let fmt = new Intl.NumberFormat(undefined, {
 		notation: 'compact',
 		compactDisplay: 'long'
-	});
-
-	onMount(() => {
-		console.log(PUBLIC_BUCKET_ENDPOINT);
-		console.log(PUBLIC_SEARCH_BEARER);
 	});
 </script>
 
