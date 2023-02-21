@@ -181,7 +181,7 @@
 				</div>
 			{/if}
 		</div>
-		<PageSelector bind:page={currPage} maxPage={data.maxChapter} />
+		<PageSelector bind:page={currPage} maxPage={data.currChapter} />
 		<div class="flex flex-col items-stretch px-4 my-2 gap-y-4">
 			{#if data.content.chapters[currPage - 1].title}
 				<h1 class="text-lg text-center mx-4">
