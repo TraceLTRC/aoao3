@@ -9,7 +9,7 @@ const config = {
 
 	kit: {
 		adapter: adapter({
-			regions: ['fra1', 'sin1', 'sfo1']
+			regions: ['fra1']
 		}),
 		csp: {
 			mode: "auto",
