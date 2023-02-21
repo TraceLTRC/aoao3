@@ -11,7 +11,9 @@
 	$: candidatePage = `${page}`;
 
 	let touchStartX = 0;
+	let touchStartY = 0;
 	let touchEndX = 0;
+	let touchEndY = 0;
 
 	let isModalOpen = false;
 
@@ -51,13 +53,17 @@
 		if (secondary) return;
 
 		touchStartX = e.changedTouches[0].screenX;
+		touchStartY = e.changedTouches[0].screenY;
 	}}
 	on:touchend={(e) => {
+		if (secondary) return;
+
 		touchEndX = e.changedTouches[0].screenX;
+		touchEndY = e.changedTouches[0].screenY;
 		if (touchEndX > touchStartX) {
-			alert('You swiped ' + (touchEndX - touchStartX));
+			alert('You swiped ' + (touchEndX - touchStartX) + ' ' + (touchEndY - touchStartY));
 		} else if (touchEndX < touchStartX) {
-			alert('You swiped ' + (touchEndX - touchStartX));
+			alert('You swiped ' + (touchEndX - touchStartX) + ' ' + (touchEndY - touchStartY));
 		}
 	}}
 />
