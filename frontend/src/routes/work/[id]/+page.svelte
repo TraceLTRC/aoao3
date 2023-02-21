@@ -3,8 +3,11 @@
 	import { page } from '$app/stores';
 	import type { PageData } from './$types';
 	import PageSelector from '../../../components/PageSelector.svelte';
+	import { bind } from 'svelte/internal';
 
 	export let data: PageData;
+
+	let currPage = 1;
 
 	const publishedDate = new Date(data.publishedTime);
 	const lastUpdated = data.lastUpdated ? new Date(data.lastUpdated) : undefined;
@@ -17,8 +20,6 @@
 			date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth() + 1
 		}-${date.getDate()}`;
 	}
-
-	let chapter = 1;
 </script>
 
 <div class="w-full min-h-min text-sm lg:text-base">
@@ -154,7 +155,7 @@
 		</dd>
 	</dl>
 	<div id="workskin" class="flex flex-col gap-y-4 pt-4 text-[#d4d4d8] items-center">
-		<div class="flex flex-col">
+		<div class="flex flex-col items-stretch">
 			<h1 class="text-2xl text-center">{data.title}</h1>
 			{#if data.authors.length}
 				<h3 class="flex flex-row justify-center items-center">
@@ -177,17 +178,37 @@
 					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
 						{@html DOMPurify.sanitize(data.content.beginningNotes)}
 					</div>
-					{#if data.content.endingNotes}
-						<p>
-							See the end of the work for <a
-								class="underline text-white"
-								href="{$page.url.pathname}#ending-notes">more notes.</a
-							>
-						</p>
-					{/if}
 				</div>
 			{/if}
 		</div>
-		<PageSelector maxPage={data.maxChapter} />
+		<PageSelector bind:page={currPage} maxPage={data.maxChapter} />
+		<div class="flex flex-col items-stretch px-4 my-2 gap-y-4">
+			{#if data.content.chapters[currPage - 1].title}
+				<h1 class="text-lg text-center mx-4">
+					Chapter {currPage}: {data.content.chapters[currPage - 1].title}
+				</h1>
+			{/if}
+			{#if data.content.chapters[currPage - 1].summary}
+				<div class="flex flex-col gap-y-1 mx-8">
+					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Summary:</h5>
+					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
+						{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].summary)}
+					</div>
+				</div>
+			{/if}
+			{#if data.content.chapters[currPage - 1].beginningNotes}
+				<div class="flex flex-col gap-y-1 mx-8">
+					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
+					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
+						{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].beginningNotes)}
+					</div>
+				</div>
+			{/if}
+			<div
+				class="pt-4 mt-2 border-t-2 border-white prose prose-zinc !prose-invert prose-sm md:prose-base"
+			>
+				{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].content)}
+			</div>
+		</div>
 	</div>
 </div>

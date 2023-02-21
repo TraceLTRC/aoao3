@@ -14,7 +14,7 @@ const config = {
 			directives: {
 				"script-src": ["self"]
 			}
-		}
+		},
 	}
 };
 

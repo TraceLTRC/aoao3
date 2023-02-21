@@ -4,7 +4,7 @@
 	import FrontArrowIcon from './icons/FrontArrowIcon.svelte';
 
 	export let maxPage: number;
-	let page: number = 1;
+	export let page: number = 1;
 	let candidatePage: string = `${page}`;
 
 	$: candidatePage = `${page}`;
