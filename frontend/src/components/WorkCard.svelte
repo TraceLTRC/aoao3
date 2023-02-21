@@ -4,6 +4,8 @@
 	import DOMPurify from 'isomorphic-dompurify';
 
 	export let work: WorkDocument;
+
+	const intl = Intl.NumberFormat();
 </script>
 
 <div
@@ -67,10 +69,10 @@
 		class="flex flex-row flex-wrap gap-x-2 gap-y-1 text-sm justify-end items-stretch mt-3 mr-2 mb-2"
 	>
 		<span>Language: {work.language}</span>
-		<span>Words: {work.words}</span>
+		<span>Words: {intl.format(work.words)}</span>
 		<span>Chapters: {work.currChapter}/{work.maxChapter}</span>
-		<span>Kudos: {work.kudos}</span>
-		<span>Bookmarks: {work.bookmarks}</span>
-		<span>Hits: {work.hits}</span>
+		<span>Kudos: {intl.format(work.kudos)}</span>
+		<span>Bookmarks: {intl.format(work.bookmarks)}</span>
+		<span>Hits: {intl.format(work.hits)}</span>
 	</div>
 </div>

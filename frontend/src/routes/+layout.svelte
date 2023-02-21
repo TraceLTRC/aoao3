@@ -4,16 +4,12 @@
 	import Header from '../components/Header.svelte';
 
 	import { navigating } from '$app/stores';
-	import { fade } from 'svelte/transition';
 	import PreloadingIndicator from '../components/PreloadingIndicator.svelte';
 </script>
 
 <svelte:head>
 	<title>AOAO3</title>
-	<meta
-		name="description"
-		content="Because the &quot;archive&quot; in archiveofourown is a false statement."
-	/>
+	<meta name="description" content="Because the &quot;archive&quot; in AO3 is a false statement." />
 	<meta name="robots" content="nosnippet" />
 </svelte:head>
 

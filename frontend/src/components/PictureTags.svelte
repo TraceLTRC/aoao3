@@ -105,7 +105,7 @@
 		title={rating}
 		width="32"
 		height="32"
-		class="bg-opacity-40 bg-white"
+		class="bg-opacity-40 bg-white w-8 h-8"
 	/>
 	<img
 		src={categorySrc}
@@ -113,7 +113,7 @@
 		title={category.join(', ')}
 		width="32"
 		height="32"
-		class="bg-opacity-40 bg-white"
+		class="bg-opacity-40 bg-white w-8 h-8"
 	/>
 	<img
 		src={warningSrc}
@@ -121,7 +121,7 @@
 		title={warning.join(', ')}
 		width="32"
 		height="32"
-		class="bg-opacity-40 bg-white"
+		class="bg-opacity-40 bg-white w-8 h-8"
 	/>
 	<img
 		src={completeSrc}
@@ -129,6 +129,6 @@
 		title={chapterToStr(chapter)}
 		width="32"
 		height="32"
-		class="bg-opacity-40 bg-white"
+		class="bg-opacity-40 bg-white w-8 h-8"
 	/>
 </div>

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import DOMPurify from 'isomorphic-dompurify';
-	import { page } from '$app/stores';
-	import type { PageData } from './$types';
+	import { fade } from 'svelte/transition';
 	import PageSelector from '../../../components/PageSelector.svelte';
-	import { bind } from 'svelte/internal';
+	import type { PageData } from './$types';
 
 	export let data: PageData;
 
@@ -182,7 +181,7 @@
 			{/if}
 		</div>
 		<PageSelector bind:page={currPage} maxPage={data.currChapter} />
-		<div class="flex flex-col items-stretch px-4 my-2 gap-y-4">
+		<div transition:fade class="flex flex-col items-stretch px-4 my-2 gap-y-4">
 			{#if data.content.chapters[currPage - 1].title}
 				<h1 class="text-lg text-center mx-4">
 					Chapter {currPage}: {data.content.chapters[currPage - 1].title}

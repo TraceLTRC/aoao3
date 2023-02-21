@@ -28,6 +28,19 @@
 	}
 </script>
 
+<svelte:window
+	on:keydown={(e) => {
+		switch (e.key) {
+			case 'ArrowRight':
+				goNextPage();
+				break;
+			case 'ArrowLeft':
+				goPrevPage();
+				break;
+		}
+	}}
+/>
+
 <div class="flex flex-row justify-center items-center gap-x-1">
 	<button on:click={goPrevPage} class="h-7 w-7 flex justify-center items-center">
 		<BackArrowIcon class="text-sky-400 h-6 w-6" />

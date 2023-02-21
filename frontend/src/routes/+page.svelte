@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import WorkCard from '../components/WorkCard.svelte';
 	import { formatBytes } from '../utils';
 	import type { PageData } from './$types';
