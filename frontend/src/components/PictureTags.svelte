@@ -97,7 +97,7 @@
 </script>
 
 <div
-	class="w-[68px] h-[68px] flex flex-row flex-wrap flex-none content-start items-center gap-1 {className}"
+	class="w-[68px] h-[68px] grid grid-cols-2 grid-rows-2 flex-none content-start items-center gap-1 {className}"
 >
 	<img
 		src={rateSrc}
@@ -105,7 +105,7 @@
 		title={rating}
 		width="32"
 		height="32"
-		class="bg-opacity-40 bg-white w-8 h-8"
+		class="bg-opacity-40 bg-white w-8 h-8 order-1"
 	/>
 	<img
 		src={categorySrc}
@@ -113,7 +113,7 @@
 		title={category.join(', ')}
 		width="32"
 		height="32"
-		class="bg-opacity-40 bg-white w-8 h-8"
+		class="bg-opacity-40 bg-white w-8 h-8 order-2"
 	/>
 	<img
 		src={warningSrc}
@@ -121,7 +121,7 @@
 		title={warning.join(', ')}
 		width="32"
 		height="32"
-		class="bg-opacity-40 bg-white w-8 h-8"
+		class="bg-opacity-40 bg-white w-8 h-8 order-3"
 	/>
 	<img
 		src={completeSrc}
@@ -129,6 +129,6 @@
 		title={chapterToStr(chapter)}
 		width="32"
 		height="32"
-		class="bg-opacity-40 bg-white w-8 h-8"
+		class="bg-opacity-40 bg-white w-8 h-8 order-4"
 	/>
 </div>
