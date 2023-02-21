@@ -238,5 +238,13 @@
 		<div class="py-4 border-b-2 border-t-2 border-white">
 			<PageSelector bind:page={currPage} maxPage={data.currChapter} secondary />
 		</div>
+		{#if data.content.endingNotes}
+			<div class="flex flex-col mt-4 gap-y-1 mx-8 mb-2">
+				<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
+				<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
+					{@html DOMPurify.sanitize(data.content.endingNotes)}
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
