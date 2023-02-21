@@ -21,7 +21,6 @@ export const POST: RequestHandler = async ({ request }) => {
             limit: reqBody.limit,
             offset: reqBody.offset,
         }),
-        credentials: "include",
         headers: {
             'Authorization': 'Bearer ' + PUBLIC_SEARCH_BEARER,
             'content-type': 'application/json'
