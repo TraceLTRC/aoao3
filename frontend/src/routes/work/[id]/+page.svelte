@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DOMPurify from 'isomorphic-dompurify';
 	import { fade } from 'svelte/transition';
+	import { onDestroy, onMount } from 'svelte';
 	import PageSelector from '../../../components/PageSelector.svelte';
 	import type { PageData } from './$types';
 
@@ -19,9 +20,21 @@
 			date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth() + 1
 		}-${date.getDate()}`;
 	}
+
+	function onPageChange() {
+		document.getElementById('top-page-select')?.scrollIntoView({
+			behavior: 'smooth'
+		});
+	}
+
+	onMount(() => {
+		document.addEventListener('pagechange', onPageChange);
+
+		return () => document.removeEventListener('pagechange', onPageChange);
+	});
 </script>
 
-<div class="w-full min-h-min text-sm lg:text-base">
+<div class="w-full min-h-min text-sm lg:text-base flex flex-col items-center justify-center">
 	<dl
 		class="mx-3 my-4 px-3 py-2 md:mx-8 lg:mx-16 xl:mx-24 border border-sky-400 bg-zinc-800 shadow-md shadow-zinc-500 flex flex-col items-start md:flex-row md:flex-wrap"
 	>
@@ -153,7 +166,10 @@
 			</dl>
 		</dd>
 	</dl>
-	<div id="workskin" class="flex flex-col gap-y-4 pt-4 text-[#d4d4d8] items-center">
+	<div
+		id="workskin"
+		class="md:w-4/5 lg:w-3/5 xl:w-1/2 flex flex-col gap-y-4 pt-4 text-[#d4d4d8] items-center"
+	>
 		<div class="flex flex-col items-stretch">
 			<h1 class="text-2xl text-center">{data.title}</h1>
 			{#if data.authors.length}
@@ -172,31 +188,33 @@
 				</a>
 			{/if}
 			{#if data.summary}
-				<div class="flex flex-col mt-4 gap-y-1 mx-8">
+				<div class="flex flex-col mt-4 gap-y-1 mx-8 mb-2">
 					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Summary:</h5>
-					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
+					<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
 						{@html DOMPurify.sanitize(data.summary)}
 					</div>
 				</div>
 			{/if}
 			{#if data.content.beginningNotes}
-				<div class="flex flex-col mt-4 gap-y-1 mx-8 border-b border-white pb-6">
+				<div class="flex flex-col mt-4 gap-y-1 mx-8 mb-2">
 					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
-					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
+					<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
 						{@html DOMPurify.sanitize(data.content.beginningNotes)}
 					</div>
 				</div>
 			{/if}
 		</div>
-		<PageSelector bind:page={currPage} maxPage={data.currChapter} />
-		<div transition:fade class="flex flex-col items-stretch px-4 my-2 gap-y-4">
-			{#if data.content.chapters[currPage - 1].title}
-				<h1 class="text-lg text-center mx-4">
+		<div class="py-4 border-b-2 border-t-2 border-white">
+			<PageSelector bind:page={currPage} maxPage={data.currChapter} />
+		</div>
+		<div transition:fade class="flex flex-col items-stretch px-4 mb-2 gap-y-4">
+			{#if data.content.chapters[currPage - 1].title && !(`Chapter ${currPage}` == data.content.chapters[currPage - 1].title)}
+				<h1 class="text-lg text-center mb-4">
 					Chapter {currPage}: {data.content.chapters[currPage - 1].title}
 				</h1>
 			{/if}
 			{#if data.content.chapters[currPage - 1].summary}
-				<div class="flex flex-col gap-y-1 mx-8">
+				<div class="flex flex-col gap-y-1 mx-8 mb-2">
 					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Summary:</h5>
 					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
 						{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].summary)}
@@ -204,18 +222,27 @@
 				</div>
 			{/if}
 			{#if data.content.chapters[currPage - 1].beginningNotes}
-				<div class="flex flex-col gap-y-1 mx-8">
+				<div class="flex flex-col gap-y-1 mx-8 mb-2">
 					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
-					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
+					<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
 						{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].beginningNotes)}
 					</div>
 				</div>
 			{/if}
-			<div
-				class="pt-4 mt-2 border-t-2 border-white prose prose-zinc !prose-invert prose-sm md:prose-base"
-			>
+			<div class="prose prose-zinc !prose-invert prose-sm md:prose-base">
 				{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].content)}
 			</div>
+			{#if data.content.chapters[currPage - 1].endingNotes}
+				<div class="flex flex-col gap-y-1 mx-8">
+					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
+					<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
+						{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].endingNotes)}
+					</div>
+				</div>
+			{/if}
+		</div>
+		<div class="py-4 border-b-2 border-t-2 border-white">
+			<PageSelector bind:page={currPage} maxPage={data.currChapter} secondary />
 		</div>
 	</div>
 </div>

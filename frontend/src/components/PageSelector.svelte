@@ -5,9 +5,13 @@
 
 	export let maxPage: number;
 	export let page: number = 1;
-	let candidatePage: string = `${page}`;
+	export let secondary = false;
 
+	let candidatePage: string = `${page}`;
 	$: candidatePage = `${page}`;
+
+	let touchStartX = 0;
+	let touchEndX = 0;
 
 	let isModalOpen = false;
 
@@ -17,6 +21,7 @@
 		}
 
 		page++;
+		document.dispatchEvent(new CustomEvent('pagechange'));
 	}
 
 	function goPrevPage() {
@@ -25,11 +30,14 @@
 		}
 
 		page--;
+		document.dispatchEvent(new CustomEvent('pagechange'));
 	}
 </script>
 
 <svelte:window
 	on:keydown={(e) => {
+		if (secondary) return;
+
 		switch (e.key) {
 			case 'ArrowRight':
 				goNextPage();
@@ -39,9 +47,20 @@
 				break;
 		}
 	}}
+	on:touchstart={(e) => {
+		touchStartX = e.changedTouches[0].screenX;
+	}}
+	on:touchend={(e) => {
+		touchEndX = e.changedTouches[0].screenX;
+		if (touchEndX > touchStartX) {
+			goNextPage();
+		} else if (touchEndX < touchStartX) {
+			goPrevPage();
+		}
+	}}
 />
 
-<div class="flex flex-row justify-center items-center gap-x-1">
+<div id="top-page-select" class="flex flex-row justify-center items-center gap-x-1">
 	<button on:click={goPrevPage} class="h-7 w-7 flex justify-center items-center">
 		<BackArrowIcon class="text-sky-400 h-6 w-6" />
 	</button>
