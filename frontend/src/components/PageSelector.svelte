@@ -60,10 +60,12 @@
 
 		touchEndX = e.changedTouches[0].screenX;
 		touchEndY = e.changedTouches[0].screenY;
-		if (touchEndX > touchStartX) {
-			alert('You swiped ' + (touchEndX - touchStartX) + ' ' + (touchEndY - touchStartY));
-		} else if (touchEndX < touchStartX) {
-			alert('You swiped ' + (touchEndX - touchStartX) + ' ' + (touchEndY - touchStartY));
+		if (Math.abs(touchEndY - touchStartY) <= 30) {
+			if (touchEndX > touchStartX && touchEndX - touchStartX > 250) {
+				goPrevPage();
+			} else if (touchEndX < touchStartX && touchStartX - touchEndX > 250) {
+				goNextPage();
+			}
 		}
 	}}
 />
