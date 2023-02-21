@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import { createEventDispatcher } from 'svelte/types/runtime/internal/lifecycle';
 	import BackArrowIcon from './icons/BackArrowIcon.svelte';
 	import FrontArrowIcon from './icons/FrontArrowIcon.svelte';
+
+	const dispatch = createEventDispatcher();
 
 	export let maxPage: number;
 	export let page: number = 1;
@@ -23,7 +26,7 @@
 		}
 
 		page++;
-		document.dispatchEvent(new CustomEvent('pagechange'));
+		dispatch('pagechange');
 	}
 
 	function goPrevPage() {
@@ -32,7 +35,7 @@
 		}
 
 		page--;
-		document.dispatchEvent(new CustomEvent('pagechange'));
+		dispatch('pagechange');
 	}
 </script>
 

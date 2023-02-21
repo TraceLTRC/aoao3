@@ -26,12 +26,6 @@
 			behavior: 'smooth'
 		});
 	}
-
-	onMount(() => {
-		document.addEventListener('pagechange', onPageChange);
-
-		return () => document.removeEventListener('pagechange', onPageChange);
-	});
 </script>
 
 <div class="w-full min-h-min text-sm lg:text-base flex flex-col items-center justify-center">
@@ -205,7 +199,7 @@
 			{/if}
 		</div>
 		<div class="py-4 border-b-2 border-t-2 border-white">
-			<PageSelector bind:page={currPage} maxPage={data.currChapter} />
+			<PageSelector bind:page={currPage} on:pagechange={onPageChange} maxPage={data.currChapter} />
 		</div>
 		<div transition:fade class="flex flex-col items-stretch px-4 mb-2 gap-y-4">
 			{#if data.content.chapters[currPage - 1].title && !(`Chapter ${currPage}` == data.content.chapters[currPage - 1].title)}
