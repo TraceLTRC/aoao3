@@ -1,7 +1,5 @@
 <script lang="ts">
 	import DOMPurify from 'isomorphic-dompurify';
-	import { fade } from 'svelte/transition';
-	import { onDestroy, onMount } from 'svelte';
 	import PageSelector from '../../../components/PageSelector.svelte';
 	import type { PageData } from './$types';
 
@@ -198,10 +196,16 @@
 				</div>
 			{/if}
 		</div>
-		<div class="py-4 border-b-2 border-t-2 border-white">
-			<PageSelector bind:page={currPage} on:pagechange={onPageChange} maxPage={data.currChapter} />
-		</div>
-		<div transition:fade class="flex flex-col items-stretch px-4 mb-2 gap-y-4">
+		{#if data.maxChapter != 1}
+			<div class="py-4 border-b-2 border-t-2 border-white">
+				<PageSelector
+					bind:page={currPage}
+					on:pagechange={onPageChange}
+					maxPage={data.currChapter}
+				/>
+			</div>
+		{/if}
+		<div class="flex flex-col items-stretch px-4 mb-2 gap-y-4">
 			{#if data.content.chapters[currPage - 1].title && !(`Chapter ${currPage}` == data.content.chapters[currPage - 1].title)}
 				<h1 class="text-lg text-center mb-4">
 					Chapter {currPage}: {data.content.chapters[currPage - 1].title}
@@ -235,9 +239,16 @@
 				</div>
 			{/if}
 		</div>
-		<div class="py-4 border-b-2 border-t-2 border-white">
-			<PageSelector bind:page={currPage} maxPage={data.currChapter} secondary />
-		</div>
+		{#if data.maxChapter != 1}
+			<div class="py-4 border-b-2 border-t-2 border-white">
+				<PageSelector
+					bind:page={currPage}
+					on:pagechange={onPageChange}
+					maxPage={data.currChapter}
+					secondary
+				/>
+			</div>
+		{/if}
 		{#if data.content.endingNotes}
 			<div class="flex flex-col mt-4 gap-y-1 mx-8 mb-2">
 				<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>

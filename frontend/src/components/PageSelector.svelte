@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
-	import { createEventDispatcher } from 'svelte/types/runtime/internal/lifecycle';
+	import { createEventDispatcher } from 'svelte';
 	import BackArrowIcon from './icons/BackArrowIcon.svelte';
 	import FrontArrowIcon from './icons/FrontArrowIcon.svelte';
 
