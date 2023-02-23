@@ -20,12 +20,12 @@ const objectClient = new S3Client({
 		accessKeyId: process.env.OBJECT_ACCESS_KEY ?? '',
 		secretAccessKey: process.env.OBJECT_SECRET_KEY ?? '',
 	},
-	endpoint: `https://${process.env.OBJECT_ENDPOINT}`,
+	endpoint: `${process.env.OBJECT_ENDPOINT}`,
 	region: process.env.OBJECT_REGION,
 });
 
 const searchClient = new MeiliSearch({
-	host: `https://${process.env.SEARCH_DOMAIN}`,
+	host: `${process.env.SEARCH_ENDPOINT}`,
 	apiKey: process.env.SEARCH_API_KEY,
 });
 
@@ -109,6 +109,7 @@ app.post('/', jsonParser, async (req, res) => {
 			// do if the error is meili related, delete object, else delete document
 			res.sendStatus(500).end();
 			console.error(`ERROR: Unexpected error on work ${workId}`);
+			console.error(e);
 		}
 	}
 });

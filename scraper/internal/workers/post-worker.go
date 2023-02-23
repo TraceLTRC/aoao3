@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -20,6 +22,8 @@ type WorkPostBody struct {
 
 func PostWorker(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client, wg *sync.WaitGroup, endpoint string, queueKey string) {
 	defer wg.Done()
+
+	_, isGoogle := os.LookupEnv("GOOGLE_APPLICATION_CREDENTIALS")
 
 	for {
 		select {
@@ -56,26 +60,41 @@ func PostWorker(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client
 					return
 				}
 
-				client, err := idtoken.NewClient(context.Background(), endpoint)
-				if err != nil {
-					log.Err.Printf("Error on getting a client for work %s, %v", workId, err)
-					rdb.ZAdd(context.Background(), queueKey, redis.Z{
-						Member: workId,
-						Score:  float64(time.Now().UnixMilli()),
-					})
-					return
-				}
+				var resp *http.Response
 
-				resp, err := client.Post(endpoint, "application/json", bytes.NewReader(body))
-				if err != nil {
-					log.Err.Printf("Error on posting to URL for work %s, %v", workId, err)
-					rdb.ZAdd(context.Background(), queueKey, redis.Z{
-						Member: workId,
-						Score:  float64(time.Now().UnixMilli()),
-					})
-					return
+				if isGoogle {
+					client, err := idtoken.NewClient(context.Background(), endpoint)
+					if err != nil {
+						log.Err.Printf("Error on getting a client for work %s, %v", workId, err)
+						rdb.ZAdd(context.Background(), queueKey, redis.Z{
+							Member: workId,
+							Score:  float64(time.Now().UnixMilli()),
+						})
+						return
+					}
+
+					resp, err = client.Post(endpoint, "application/json", bytes.NewReader(body))
+					if err != nil {
+						log.Err.Printf("Error on posting to URL for work %s, %v", workId, err)
+						rdb.ZAdd(context.Background(), queueKey, redis.Z{
+							Member: workId,
+							Score:  float64(time.Now().UnixMilli()),
+						})
+						return
+					}
+					defer resp.Body.Close()
+				} else {
+					resp, err = http.Post(endpoint, "application/json", bytes.NewReader(body))
+					if err != nil {
+						log.Err.Printf("Error on posting to URL for work %s, %v", workId, err)
+						rdb.ZAdd(context.Background(), queueKey, redis.Z{
+							Member: workId,
+							Score:  float64(time.Now().UnixMilli()),
+						})
+						return
+					}
+					defer resp.Body.Close()
 				}
-				defer resp.Body.Close()
 
 				switch resp.StatusCode {
 				case 202:
@@ -88,7 +107,7 @@ func PostWorker(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client
 						Member: workId,
 						Score:  float64(time.Now().UnixMilli()),
 					})
-					time.Sleep(time.Minute * 1)
+					time.Sleep(time.Second * 20)
 				default:
 					log.Err.Printf("Work %s got an unexpected status code, %d", workId, resp.StatusCode)
 					rdb.ZAdd(context.Background(), queueKey, redis.Z{

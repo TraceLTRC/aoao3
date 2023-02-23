@@ -10,15 +10,9 @@ import (
 
 	"archive.tracel.xyz/scraper/internal/logger"
 	"archive.tracel.xyz/scraper/internal/scrapers"
+	"archive.tracel.xyz/scraper/internal/utils"
 	"archive.tracel.xyz/scraper/internal/workers"
 	"github.com/redis/go-redis/v9"
-)
-
-const (
-	genshinFandom   = "原神 | Genshin Impact (Video Game)"
-	undertaleFandom = "Undertale (Video Game)"
-	omoriFandom     = "OMORI (Video Game)"
-	deltaruneFandom = "Deltarune (Video Game)"
 )
 
 func main() {
@@ -39,9 +33,14 @@ func main() {
 	if !exists {
 		log.Err.Fatalf("Archiving function endpoint is not set! ARCHIVE_FUNCTION_ENDPOINT")
 	}
-	_, exists = os.LookupEnv("GOOGLE_APPLICATION_CREDENTIALS")
-	if !exists {
-		log.Err.Fatalf("GCloud credentials is not set! GOOGLE_APPLICATION_CREDENTIALS")
+	fandoms, err := utils.ReadLines("fandoms.txt")
+	if err != nil {
+		log.Err.Fatalf("Failed to load fandoms, %v", err)
+	}
+
+	log.Info.Printf("Fandoms to scrape: ")
+	for _, fandom := range fandoms {
+		log.Info.Printf("\t%s", fandom)
 	}
 
 	rdb := redis.NewClient(&redis.Options{
@@ -67,17 +66,11 @@ func main() {
 		go workers.PostWorker(ctx, log, rdb, &wg, archiveUrl, "workIds:queue:hits")
 	}
 
-	wg.Add(1)
-	go scrapers.HitsScraper(ctx, log, rdb, &wg, omoriFandom, *startingPage)
-	time.Sleep(time.Second * 15)
-	wg.Add(1)
-	go scrapers.HitsScraper(ctx, log, rdb, &wg, genshinFandom, *startingPage)
-	time.Sleep(time.Second * 15)
-	wg.Add(1)
-	go scrapers.HitsScraper(ctx, log, rdb, &wg, undertaleFandom, *startingPage)
-	time.Sleep(time.Second * 15)
-	wg.Add(1)
-	go scrapers.HitsScraper(ctx, log, rdb, &wg, deltaruneFandom, *startingPage)
+	for _, fandom := range fandoms {
+		wg.Add(1)
+		go scrapers.HitsScraper(ctx, log, rdb, &wg, fandom, *startingPage)
+		time.Sleep(time.Second * 15)
+	}
 
 	wg.Wait()
 }

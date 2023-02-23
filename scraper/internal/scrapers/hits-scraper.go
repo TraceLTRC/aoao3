@@ -18,9 +18,17 @@ import (
 func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client, wg *sync.WaitGroup, fandom string, startingPage int) {
 	defer wg.Done()
 
+	var stringFandom string
+	var err error
+
+	stringFandom, err = url.QueryUnescape(fandom)
+	if err != nil {
+		stringFandom = fandom
+	}
+
 	var lastPage int
 
-	startingUrl := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=hits&page=%d&tag_id=", startingPage) + url.QueryEscape(fandom)
+	startingUrl := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=hits&page=%d&tag_id=%s", startingPage, fandom)
 
 	collector := colly.NewCollector(colly.AllowedDomains("archiveofourown.org"))
 
@@ -40,7 +48,7 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 			log.Err.Printf("Failed to add work in queue, %v", err)
 		}
 
-		log.Info.Printf("Added %s to queue (%s)", workId, fandom)
+		log.Info.Printf("Added %s to queue (%s)", workId, stringFandom)
 	})
 	defer collector.OnHTMLDetach("ol.work.index.group > li[id^=\"work_\"]")
 
@@ -76,7 +84,7 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 	})
 
 	// first visit
-	err := collector.Visit(startingUrl)
+	err = collector.Visit(startingUrl)
 	if err != nil {
 		log.Err.Printf("Failed to visit %s, %v", startingUrl, err)
 	}
@@ -86,21 +94,24 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 	for {
 		select {
 		case <-ctx.Done():
-			log.Info.Printf("Hit scraper (%s) finished...", fandom)
+			log.Info.Printf("Hit scraper (%s) finished...", stringFandom)
 			return
 		case <-time.After(time.Second * 30):
 			if page > lastPage {
-				log.Info.Printf("Hit scraper (%s) finished...", fandom)
+				log.Info.Printf("Hit scraper (%s) finished...", stringFandom)
 				return
 			}
 
-			pageUrl := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=hits&page=%d&tag_id=", page) + url.QueryEscape(fandom)
+			pageUrl := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=hits&page=%d&tag_id=%s", page, fandom)
 			for {
 				err = collector.Visit(pageUrl)
 				if err == nil || strings.Contains(err.Error(), "already visited") {
 					break
 				}
 				log.Err.Printf("Visiting %s failed with status %v", pageUrl, err)
+				if strings.Contains(err.Error(), "Too Many Requests") {
+					time.Sleep(time.Minute * 5)
+				}
 			}
 			page++
 		}
