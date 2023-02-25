@@ -3,7 +3,7 @@
 </script>
 
 <header
-	class="flex flex-col justify-around w-full h-32 bg-slate-800 px-2 pt-2 gap-1 md:px-8 md:gap-2"
+	class="flex flex-col justify-around w-full h-32 bg-slate-800 px-2 pt-2 gap-1 md:px-8 md:gap-2 z-50"
 >
 	<div class="flex flex-row justify-center items-center">
 		<a class="text-4xl mb-1 tracking-tighter" href="/">Archive of AO3</a>

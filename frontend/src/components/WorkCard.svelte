@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { WorkDocument } from '../types';
+	import type { WorkDocument } from '../types/work';
 	import PictureTags from './PictureTags.svelte';
 	import DOMPurify from 'isomorphic-dompurify';
 
