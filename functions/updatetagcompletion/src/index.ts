@@ -77,7 +77,7 @@ ff.http('UpdateTagCompletion', async (_, res) => {
 		await search.index('tags').updateDocuments(tagArray.slice(i, i + 10000));
 	}
 
-	const authorArray = tags.export();
+	const authorArray = authors.export();
 	for (let i = 0; i < authorArray.length; i += 10000) {
 		await search.index('authors').updateDocuments(authorArray.slice(i, i + 10000));
 	}
