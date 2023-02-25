@@ -20,7 +20,7 @@ export const ratingLabels: Record<Rating, string> = {
 	Mature: 'rating-mature'
 };
 
-const categoryTuple = ['F/F', 'M/M', 'F/M', 'Gen', 'Multi', 'Other'] as const;
+export const categoryTuple = ['F/F', 'M/M', 'F/M', 'Gen', 'Multi', 'Other'] as const;
 
 export type Category = (typeof categoryTuple)[number];
 
@@ -28,7 +28,7 @@ export function isCategory(str: string): str is Category {
 	return categoryTuple.includes(str as Category);
 }
 
-const warningTuple = [
+export const warningTuple = [
 	'Creator Chose Not To Use Archive Warnings',
 	'Graphic Depictions Of Violence',
 	'Major Character Death',
