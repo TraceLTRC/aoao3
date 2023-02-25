@@ -14,10 +14,26 @@ export function removeFromArray<T extends string | number>(arr: T[], el: T) {
 	if (arr.includes(el)) arr.splice(arr.indexOf(el), 1);
 }
 
-export const debounce = (fn: Function, ms = 750) => {
-	let timeoutId: ReturnType<typeof setTimeout>;
-	return function (this: any, ...args: any[]) {
-		clearTimeout(timeoutId);
-		timeoutId = setTimeout(() => fn.apply(this, args), ms);
+// https://stackoverflow.com/questions/35228052/debounce-function-implemented-with-promises
+export function debouncePromise<T extends (...args: any[]) => any>(
+	fn: T,
+	wait: number,
+	abortValue: any = undefined
+) {
+	let cancel = () => {};
+	// type Awaited<T> = T extends PromiseLike<infer U> ? U : T
+	type ReturnT = Awaited<ReturnType<T>>;
+	const wrapFunc = (...args: Parameters<T>): Promise<ReturnT> => {
+		cancel();
+		return new Promise((resolve, reject) => {
+			const timer = setTimeout(() => resolve(fn(...args)), wait);
+			cancel = () => {
+				clearTimeout(timer);
+				if (abortValue !== undefined) {
+					reject(abortValue);
+				}
+			};
+		});
 	};
-};
+	return wrapFunc;
+}

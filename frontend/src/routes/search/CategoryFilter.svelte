@@ -3,19 +3,20 @@
 	import { slide } from 'svelte/transition';
 	import DownArrowIcon from '../../components/DownArrowIcon.svelte';
 	import TristateCheckbox from '../../components/TristateCheckbox.svelte';
-	import { isRating, ratingTuple, type Rating } from '../../types/work';
+	import { isCategory, categoryTuple, type Category } from '../../types/work';
 
-	export let included: Set<Rating> = new Set();
-	export let excluded: Set<Rating> = new Set();
+	export let included: Set<Category> = new Set();
+	export let excluded: Set<Category> = new Set();
 
 	let isOpen = false;
 
-	const initRatings = $page.url.searchParams.get('rating')?.split(',').filter(isRating) ?? [];
+	const initCategories =
+		$page.url.searchParams.get('category')?.split(',').filter(isCategory) ?? [];
 
-	const ratings = ratingTuple.map((rating) => {
+	const categories = categoryTuple.map((category) => {
 		return {
-			str: rating,
-			value: initRatings.includes(rating)
+			str: category,
+			value: initCategories.includes(category)
 		};
 	});
 </script>
@@ -25,7 +26,7 @@
 		class="w-full pb-1 px-2 mb-2 border-b border-white rounded-b-md font-semibold flex justify-between items-center"
 		on:click={() => (isOpen = !isOpen)}
 	>
-		<span>Ratings:</span>
+		<span>Categories:</span>
 		<span>
 			<DownArrowIcon
 				class="w-4 h-4 transform transition-transform duration-200 {isOpen
@@ -39,26 +40,26 @@
 			class="flex flex-col items-center gap-y-2 mx-3 text-sm"
 			transition:slide={{ duration: 200 }}
 		>
-			{#each ratings as rating}
+			{#each categories as category}
 				<TristateCheckbox
-					id={`rating-${rating.str.replaceAll(' ', '_')}`}
-					freindlyId={rating.str}
+					id={`category-${category.str.replaceAll(' ', '_')}`}
+					freindlyId={category.str}
 					on:change={(e) => {
 						if (e.detail.value === true) {
-							included.add(rating.str);
-							excluded.delete(rating.str);
+							included.add(category.str);
+							excluded.delete(category.str);
 						} else if (e.detail.value === false) {
-							included.delete(rating.str);
-							excluded.add(rating.str);
+							included.delete(category.str);
+							excluded.add(category.str);
 						} else {
-							included.delete(rating.str);
-							excluded.delete(rating.str);
+							included.delete(category.str);
+							excluded.delete(category.str);
 						}
 
 						included = included;
 						excluded = excluded;
 					}}
-					value={initRatings.includes(rating.str) ? true : undefined}
+					value={initCategories.includes(category.str) ? true : undefined}
 				/>
 			{/each}
 		</div>

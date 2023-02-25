@@ -42,7 +42,7 @@
 	});
 </script>
 
-<div class="w-full h-fit flex flex-row gap-x-2">
+<div class="w-full h-fit flex flex-row gap-x-2 items-center">
 	<button
 		{id}
 		on:click|preventDefault={() => {
@@ -57,10 +57,11 @@
 				value
 			});
 		}}
-		class="w-6 h-6 rounded-md {stateToColor(
+		class="w-6 h-6 rounded-md flex-shrink-0 {stateToColor(
 			value
 		)} border-white border font-extrabold text-lg flex items-center justify-center {className}"
-		>{stateToString(value)}
+	>
+		{stateToString(value)}
 	</button>
 	<label for={id}>{freindlyId}</label>
 </div>

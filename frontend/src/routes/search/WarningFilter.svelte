@@ -3,19 +3,19 @@
 	import { slide } from 'svelte/transition';
 	import DownArrowIcon from '../../components/DownArrowIcon.svelte';
 	import TristateCheckbox from '../../components/TristateCheckbox.svelte';
-	import { isRating, ratingTuple, type Rating } from '../../types/work';
+	import { isWarning, warningTuple, type Warning } from '../../types/work';
 
-	export let included: Set<Rating> = new Set();
-	export let excluded: Set<Rating> = new Set();
+	export let included: Set<Warning> = new Set();
+	export let excluded: Set<Warning> = new Set();
 
 	let isOpen = false;
 
-	const initRatings = $page.url.searchParams.get('rating')?.split(',').filter(isRating) ?? [];
+	const initWarnings = $page.url.searchParams.get('warning')?.split(',').filter(isWarning) ?? [];
 
-	const ratings = ratingTuple.map((rating) => {
+	const warnings = warningTuple.map((warning) => {
 		return {
-			str: rating,
-			value: initRatings.includes(rating)
+			str: warning,
+			value: initWarnings.includes(warning)
 		};
 	});
 </script>
@@ -25,7 +25,7 @@
 		class="w-full pb-1 px-2 mb-2 border-b border-white rounded-b-md font-semibold flex justify-between items-center"
 		on:click={() => (isOpen = !isOpen)}
 	>
-		<span>Ratings:</span>
+		<span>Warnings:</span>
 		<span>
 			<DownArrowIcon
 				class="w-4 h-4 transform transition-transform duration-200 {isOpen
@@ -39,26 +39,26 @@
 			class="flex flex-col items-center gap-y-2 mx-3 text-sm"
 			transition:slide={{ duration: 200 }}
 		>
-			{#each ratings as rating}
+			{#each warnings as warning}
 				<TristateCheckbox
-					id={`rating-${rating.str.replaceAll(' ', '_')}`}
-					freindlyId={rating.str}
+					id={`warning-${warning.str.replaceAll(' ', '_')}`}
+					freindlyId={warning.str}
 					on:change={(e) => {
 						if (e.detail.value === true) {
-							included.add(rating.str);
-							excluded.delete(rating.str);
+							included.add(warning.str);
+							excluded.delete(warning.str);
 						} else if (e.detail.value === false) {
-							included.delete(rating.str);
-							excluded.add(rating.str);
+							included.delete(warning.str);
+							excluded.add(warning.str);
 						} else {
-							included.delete(rating.str);
-							excluded.delete(rating.str);
+							included.delete(warning.str);
+							excluded.delete(warning.str);
 						}
 
 						included = included;
 						excluded = excluded;
 					}}
-					value={initRatings.includes(rating.str) ? true : undefined}
+					value={initWarnings.includes(warning.str) ? true : undefined}
 				/>
 			{/each}
 		</div>

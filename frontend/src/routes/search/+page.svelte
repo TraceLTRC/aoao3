@@ -1,62 +1,36 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import BaselineMenuIcon from '../../components/icons/BaselineMenuIcon.svelte';
-	import TristateCheckbox from '../../components/TristateCheckbox.svelte';
-	import {
-		isCategory,
-		isRating,
-		isWarning,
-		type Category,
-		type Rating,
-		type Warning
-	} from '../../types/work';
+	import type { Category, Rating, Warning } from '../../types/work';
+	import CategoryFilter from './CategoryFilter.svelte';
 	import RatingFilter from './RatingFilter.svelte';
+	import SearchQuery from './SearchQuery.svelte';
+	import WarningFilter from './WarningFilter.svelte';
 
 	let innerWidth: number;
 
-	const authorQuery = $page.url.searchParams.get('author')?.split(',');
-	let authorsToFilter: string[] = authorQuery ? [...authorQuery] : [];
+	let includedRatings: Set<Rating>;
+	let excludedRatings: Set<Rating>;
 
-	const fandomQuery = $page.url.searchParams.get('fandom')?.split(',');
-	let fandomsToFilter: string[] = fandomQuery ? [...fandomQuery] : [];
+	let includedWarnings: Set<Warning>;
+	let excludedWarnings: Set<Warning>;
 
-	const languageQuery = $page.url.searchParams.get('language')?.split(',');
-	let languageToFilter: string[] = languageQuery ? [...languageQuery] : [];
-
-	const relationshipQuery = $page.url.searchParams.get('relationship')?.split(',');
-	let relationshipToFilter: string[] = relationshipQuery ? [...relationshipQuery] : [];
-
-	const tagQuery = $page.url.searchParams.get('tag')?.split(',');
-	let tagToFilter: string[] = tagQuery ? [...tagQuery] : [];
-
-	let ratingToFilter: Rating[] = [];
-	$page.url.searchParams
-		.get('rating')
-		?.split(',')
-		.forEach((val) => isRating(val) && ratingToFilter.push(val));
-
-	let categoryToFilter: Category[] = [];
-	$page.url.searchParams
-		.get('category')
-		?.split(',')
-		.forEach((val) => isCategory(val) && categoryToFilter.push(val));
-
-	let warningToFilter: Warning[] = [];
-	$page.url.searchParams
-		.get('warning')
-		?.split(',')
-		.forEach((val) => isWarning(val) && warningToFilter.push(val));
+	let includedCategories: Set<Category>;
+	let excludedCategories: Set<Category>;
 
 	let isOpen = false;
 </script>
 
 <svelte:window bind:innerWidth />
 
-<div class="w-full min-h-fit md:flex md:flex-row">
+<div class="w-full min-h-fit md:flex md:flex-row md:gap-x-4 p-4">
+	<div class="md:basis-3/4">
+		<!-- Search Results -->
+	</div>
 	{#if innerWidth < 768}
 		<div
 			class={'w-64 h-full fixed right-0 transform transition-all ' +
-				(isOpen ? 'translate-x-0' : 'translate-x-full')}
+				(isOpen ? '-translate-x-2' : 'translate-x-full')}
 		>
 			<button
 				class="h-12 w-12 flex items-center justify-center -translate-x-full bg-zinc-700 rounded-l-lg"
@@ -64,17 +38,33 @@
 			>
 				<BaselineMenuIcon class="w-full h-full p-1" />
 			</button>
-			<form class="w-full h-full fixed -translate-y-12 bg-zinc-700 py-2 px-2">
+			<form class="w-full h-full fixed -translate-y-12 bg-zinc-700 flex justify-center">
+				<fieldset class="flex flex-col items-center gap-y-2 mx-2 mt-4">
+					<button
+						class="w-3/4 h-fit py-1 px-8 m-2 bg-sky-500 rounded-lg shadow-lg flex items-center justify-center"
+					>
+						Sort and Filter
+					</button>
+					<SearchQuery />
+					<RatingFilter bind:included={includedRatings} bind:excluded={excludedRatings} />
+					<WarningFilter bind:included={includedWarnings} bind:excluded={excludedWarnings} />
+					<CategoryFilter bind:included={includedCategories} bind:excluded={excludedCategories} />
+				</fieldset>
+			</form>
+		</div>
+	{:else}
+		<div class="md:basis-1/4 md:h-full ">
+			<form class="h-fit w-full bg-zinc-700 rounded-xl py-2 px-2">
 				<fieldset class="flex flex-col items-center gap-y-1">
 					<button class="w-full h-fit py-1 px-8 m-2 bg-sky-500 rounded-lg shadow-lg">
 						Sort and Filter
 					</button>
-					<RatingFilter />
+					<SearchQuery />
+					<RatingFilter bind:included={includedRatings} bind:excluded={excludedRatings} />
+					<WarningFilter bind:included={includedWarnings} bind:excluded={excludedWarnings} />
+					<CategoryFilter bind:included={includedCategories} bind:excluded={excludedCategories} />
 				</fieldset>
 			</form>
 		</div>
 	{/if}
-	<div>
-		<!-- Search menu -->
-	</div>
 </div>
