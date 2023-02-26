@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"net/url"
 	"os"
 	"os/signal"
 	"sync"
@@ -40,7 +41,8 @@ func main() {
 
 	log.Info.Printf("Fandoms to scrape: ")
 	for _, fandom := range fandoms {
-		log.Info.Printf("\t%s", fandom)
+		s, _ := url.QueryUnescape(fandom)
+		log.Info.Printf("\t%s", s)
 	}
 
 	rdb := redis.NewClient(&redis.Options{

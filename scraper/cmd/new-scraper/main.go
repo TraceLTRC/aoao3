@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"net/url"
 	"os"
 	"os/signal"
 	"sync"
@@ -41,7 +42,8 @@ func main() {
 
 	log.Info.Printf("Fandoms to scrape: ")
 	for _, fandom := range fandoms {
-		log.Info.Printf("\t%s", fandom)
+		s, _ := url.QueryUnescape(fandom)
+		log.Info.Printf("\t%s", s)
 	}
 
 	rdb := redis.NewClient(&redis.Options{
@@ -60,16 +62,16 @@ func main() {
 		}
 	}()
 
+	for i := *workerAmt; i > 0; i-- {
+		wg.Add(1)
+		go workers.PostWorker(ctx, log, rdb, &wg, archiveUrl, "workIds:queue:new")
+	}
+
 	// Launch scrapers
 	for _, fandom := range fandoms {
 		wg.Add(1)
 		go scrapers.NewScraper(ctx, log, rdb, &wg, fandom, utils.GetMD5Hash(fandom), *newAmount)
-	}
-
-	for i := *workerAmt; i > 0; i-- {
-		wg.Add(1)
-		go workers.PostWorker(ctx, log, rdb, &wg, archiveUrl, "workIds:queue:new")
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Minute)
 	}
 
 	wg.Wait()
