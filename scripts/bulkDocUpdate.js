@@ -1,73 +1,32 @@
-import { MeiliSearch } from 'meilisearch'
-import inquirer from 'inquirer';
-import { readFile } from 'fs/promises'
-import { ListObjectsV2Command, S3 } from '@aws-sdk/client-s3';
+import { MeiliSearch } from 'meilisearch';
 
 const searchEndpoint = process.env.SEARCH_ENDPOINT
 const searchBearer = process.env.SEARCH_BEARER
 
-const objectEndpoint = process.env.OBJECT_ENDPOINT
-const objectAccessKey = process.env.OBJECT_ACC_KEY
-const objectSecretKey = process.env.OBJECT_SRT_KEY
-const objectName = process.env.OBJECT_NAME
-const objectRegion = process.env.OBJECT_REGION
-
-let works;
-
-await inquirer.prompt([
-    {
-        name: "file",
-        message: "File location for work Ids to update",
-        type: "input",
-        default: "./workIds.json"
-    }
-]).then(async (answers) => {
-    works = JSON.parse(
-        await readFile(
-            answers.file
-        )
-    )
-})
-
 const search = await new MeiliSearch({
     host: searchEndpoint,
     apiKey: searchBearer
-}).getIndex('archives')
+}).index('archives')
 
-const object = new S3({
-    endpoint: `https://${objectEndpoint}`,
-    credentials: {
-        accessKeyId: objectAccessKey,
-        secretAccessKey: objectSecretKey,
-    },
-    region: objectRegion
-})
+const maxDocs = (await search.getStats()).numberOfDocuments
 
-const doc = [];
+for (let i; i < maxDocs; i += 10000) {
+    const updateDoc = []
 
-for (let work of works.hits) {
-    try {
-        const command = new ListObjectsV2Command({
-            Bucket: objectName,
-            Prefix: `${work.id}/`
+    const docsToUpdate = await search.getDocuments({
+        fields: ['id', 'authors'],
+        limit: 10000,
+        offset: i,
+    })
+
+    for (const doc of docsToUpdate.results) {
+        if (doc.authors.length != 0) continue;
+
+        updateDoc.push({
+            id: doc.id,
+            authors: ['Anonymous']
         })
-
-        const res = await object.send(command)
-        const newDoc = {
-            id: work.id,
-            contentHash: []
-        }
-        for (let content of res.Contents) {
-            let contentHash = content.Key.substring(work.id.length + 1, content.Key.length - '.br'.length)
-            console.log(`${work.id} | ${contentHash}`)
-            newDoc.contentHash.push(contentHash)
-        }
-
-        doc.push(newDoc)
-    } catch (e) {
-        console.error(e)
-        break;
     }
-}
 
-await search.updateDocuments(doc)
+    await search.updateDocuments(updateDoc)
+}

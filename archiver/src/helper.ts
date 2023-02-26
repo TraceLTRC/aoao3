@@ -44,6 +44,7 @@ export async function getWork(workId: string) {
 			return $(el).text().trim();
 		})
 		.toArray();
+	if (work.authors.length == 0) work.authors.push('Anonymous');
 	work.summary = prefaceEl.find('div.summary').children().not('h3').html()?.trim() ?? '';
 	content.beginningNotes = prefaceEl.find('div.notes').children().not('h3').html()?.trim() ?? '';
 	content.endingNotes = $('div#work_endnotes').children().not('h3').html()?.trim() ?? '';
