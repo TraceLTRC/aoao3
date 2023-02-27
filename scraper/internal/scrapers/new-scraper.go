@@ -18,7 +18,7 @@ import (
 func NewScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client, wg *sync.WaitGroup, fandom string, lastWorkKey string, maxAmount int) {
 	defer wg.Done()
 
-	url := "https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=revised_at&tag_id=" + fandom
+	url := fmt.Sprintf("https://archiveofourown.org/works?commit=Sort+and+Filter&work_search[sort_column]=revised_at&tag_id=%s", fandom)
 
 	var lastWorkId string
 	var firstWork string
