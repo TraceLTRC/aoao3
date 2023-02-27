@@ -1,6 +1,6 @@
 import { PUBLIC_SEARCH_BEARER, PUBLIC_SEARCH_ENDPOINT } from '$env/static/public';
 import type { Load } from '@sveltejs/kit';
-import MeiliSearch from 'meilisearch';
+import { MeiliSearch } from 'meilisearch';
 import type { WorkDocument } from '../types/work';
 
 const search = new MeiliSearch({

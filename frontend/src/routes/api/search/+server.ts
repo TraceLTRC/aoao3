@@ -1,6 +1,6 @@
 import { PUBLIC_SEARCH_BEARER, PUBLIC_SEARCH_ENDPOINT } from '$env/static/public';
 import { json } from '@sveltejs/kit';
-import MeiliSearch from 'meilisearch';
+import { MeiliSearch } from 'meilisearch';
 import type { workOrder } from '../../../types/search';
 import type { Category, Rating, Warning } from '../../../types/work';
 import type { RequestHandler } from './$types';
