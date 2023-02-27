@@ -2,15 +2,16 @@
 	import type { WorkDocument } from '../types/work';
 	import PictureTags from './PictureTags.svelte';
 	import DOMPurify from 'isomorphic-dompurify';
+	import { DateTime } from 'luxon';
 
 	export let work: WorkDocument;
+	export let className = '';
+	export { className as class };
 
 	const intl = Intl.NumberFormat();
 </script>
 
-<div
-	class="text-[#d4d4d8] w-full md:w-[calc(50%-1rem)] p-2 mb-3 border border-zinc-200 bg-zinc-800 flex flex-col"
->
+<div class="text-[#d4d4d8] p-2 mb-3 border border-zinc-200 bg-zinc-800 flex flex-col {className}">
 	<div class="flex flex-row mb-2 max-w-full">
 		<PictureTags
 			chapter={[work.currChapter, work.maxChapter]}
@@ -82,6 +83,7 @@
 	<div
 		class="flex flex-row flex-wrap gap-x-2 gap-y-1 text-sm justify-end items-stretch mt-3 mr-2 mb-2"
 	>
+		<span>Last archived: {DateTime.fromMillis(work.lastChecked).toRelative()}</span>
 		<span>Language: {work.language}</span>
 		<span>Words: {intl.format(work.words)}</span>
 		<span>Chapters: {work.currChapter}/{work.maxChapter}</span>

@@ -1,3 +1,7 @@
+export function timeout(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function formatBytes(bytes: number, decimals = 2) {
 	if (!+bytes) return '0 Bytes';
 
@@ -14,26 +18,33 @@ export function removeFromArray<T extends string | number>(arr: T[], el: T) {
 	if (arr.includes(el)) arr.splice(arr.indexOf(el), 1);
 }
 
-// https://stackoverflow.com/questions/35228052/debounce-function-implemented-with-promises
-export function debouncePromise<T extends (...args: any[]) => any>(
-	fn: T,
-	wait: number,
-	abortValue: any = undefined
-) {
-	let cancel = () => {};
-	// type Awaited<T> = T extends PromiseLike<infer U> ? U : T
-	type ReturnT = Awaited<ReturnType<T>>;
-	const wrapFunc = (...args: Parameters<T>): Promise<ReturnT> => {
-		cancel();
-		return new Promise((resolve, reject) => {
-			const timer = setTimeout(() => resolve(fn(...args)), wait);
-			cancel = () => {
-				clearTimeout(timer);
-				if (abortValue !== undefined) {
-					reject(abortValue);
-				}
-			};
+export function debounce(fn: (...args: any[]) => Promise<any>, ms: number = 300) {
+	let id: ReturnType<typeof setTimeout>;
+
+	return function (...args: any[]) {
+		clearTimeout(id);
+		return new Promise((res) => {
+			id = setTimeout(() => {
+				fn(...args).then((val) => {
+					res(val);
+				});
+			}, ms);
 		});
 	};
-	return wrapFunc;
+}
+
+export function clickOutside(node: Node) {
+	const handleClick = (event: any) => {
+		if (!node.contains(event.target)) {
+			node.dispatchEvent(new CustomEvent('outclick'));
+		}
+	};
+
+	document.addEventListener('click', handleClick, true);
+
+	return {
+		destroy() {
+			document.removeEventListener('click', handleClick, true);
+		}
+	};
 }

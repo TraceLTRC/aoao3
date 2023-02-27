@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WorkCard from '../components/WorkCard.svelte';
+	import WorkCard from '$lib/WorkCard.svelte';
 	import { formatBytes } from '../utils';
 	import type { PageData } from './$types';
 
@@ -29,7 +29,7 @@
 			class="flex flex-col md:flex-row md:flex-wrap md:gap-x-4 justify-start items-start md:items-stretch w-full"
 		>
 			{#each data.hits as works}
-				<WorkCard work={works} />
+				<WorkCard work={works} class="w-full md:w-[calc(50%-1rem)]" />
 			{/each}
 		</div>
 	</section>

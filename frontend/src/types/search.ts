@@ -1,4 +1,4 @@
-const workOrders = [
+export const workOrders = [
 	'author',
 	'bookmarks',
 	'hits',
@@ -10,7 +10,7 @@ const workOrders = [
 	'words'
 ] as const;
 
-type workOrder = (typeof workOrders)[number];
+export type workOrder = (typeof workOrders)[number];
 
 export const orderLabels: Record<workOrder, string> = {
 	author: 'Author',

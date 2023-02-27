@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { slide } from 'svelte/transition';
-	import DownArrowIcon from '../../components/DownArrowIcon.svelte';
-	import TristateCheckbox from '../../components/TristateCheckbox.svelte';
+	import DownArrowIcon from '$lib/DownArrowIcon.svelte';
+	import TristateCheckbox from '$lib/TristateCheckbox.svelte';
 	import { isRating, ratingTuple, type Rating } from '../../types/work';
 
 	export let included: Set<Rating> = new Set();
@@ -22,8 +22,9 @@
 
 <div class="w-full h-fit flex flex-col px-2 py-1">
 	<button
+		type="button"
 		class="w-full pb-1 px-2 mb-2 border-b border-white rounded-b-md font-semibold flex justify-between items-center"
-		on:click={() => (isOpen = !isOpen)}
+		on:click|preventDefault={() => (isOpen = !isOpen)}
 	>
 		<span>Ratings:</span>
 		<span>

@@ -2,7 +2,7 @@
 	export let value: string = '';
 </script>
 
-<div class="flex flex-col w-full px-2">
+<div class="flex flex-col w-full px-2 pb-1">
 	<div
 		class="mb-2 font-semibold bg-gradient-to-r from-white via-transparent to-transparent pb-[1px] flex"
 	>

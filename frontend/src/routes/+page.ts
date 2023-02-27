@@ -1,25 +1,19 @@
+import { PUBLIC_SEARCH_BEARER, PUBLIC_SEARCH_ENDPOINT } from '$env/static/public';
 import type { Load } from '@sveltejs/kit';
+import MeiliSearch from 'meilisearch';
 import type { WorkDocument } from '../types/work';
 
-export const load: Load = async ({ fetch }) => {
-	let works;
+const search = new MeiliSearch({
+	host: PUBLIC_SEARCH_ENDPOINT,
+	apiKey: PUBLIC_SEARCH_BEARER
+}).index('archives');
 
-	try {
-		works = (
-			await (
-				await fetch('/api/search', {
-					body: JSON.stringify({
-						sort: ['lastChecked:desc'],
-						limit: 20
-					}),
-					method: 'POST'
-				})
-			).json()
-		).hits;
-	} catch (e) {
-		console.log(e);
-		works = [];
-	}
+export const load: Load = async ({ fetch }) => {
+	const works = (
+		await search.search(null, {
+			sort: ['lastChecked:desc']
+		})
+	).hits;
 
 	const bucketStats = await (await fetch('/api/bucket-stats')).json();
 
