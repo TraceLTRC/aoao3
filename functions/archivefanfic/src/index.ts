@@ -99,6 +99,7 @@ async function getWork(workId: string) {
 	const url = `https://archiveofourown.org/works/${workId}?view_full_work=true&view_adult=true`;
 
 	let $: cheerio.CheerioAPI;
+	let resultingURL;
 
 	try {
 		const res = await axios.get(url, {
@@ -107,11 +108,14 @@ async function getWork(workId: string) {
 		});
 		if (res.status == 429) {
 			throw new Error('Too Many Requests!');
+		} else if (res.status == 404) {
+			throw new Error('Work Not Found!');
 		} else if (res.status != 200) {
 			throw new Error('Unexpected error! ' + res.status);
 		}
 
 		$ = cheerio.load(res.data);
+		resultingURL = res.request.res.responseUrl as string;
 	} catch (e) {
 		throw e;
 	}
@@ -264,7 +268,8 @@ async function getWork(workId: string) {
 	work.contentHash.push([Date.now(), hash]);
 
 	if (work.hits == -1 || work.title == '') {
-		throw new Error('Title and hits were not touched, is AO3 Down?');
+		if (resultingURL.includes('restricted')) throw new Error('Restricted Content');
+		throw new Error('Title and hits were not touched. Is AO3 Down?');
 	}
 
 	return { work, content };
@@ -327,8 +332,16 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
 	} catch (e) {
 		if (e instanceof Error && e.message.startsWith('Too Many')) {
 			res.sendStatus(429).end();
+		} else if (e instanceof Error && e.message.includes('Not Found')) {
+			console.log('Archive not found! ID: ' + workId);
+			res.sendStatus(404).end();
+		} else if (e instanceof Error && e.message.includes('Restricted')) {
+			console.log('Restricted archive! ID: ' + workId);
+			res.sendStatus(403).end();
 		} else {
-			throw e;
+			console.error('Error on WorkID: ' + workId);
+			console.error(e);
+			res.sendStatus(500).end();
 		}
 		return;
 	}
@@ -389,6 +402,7 @@ ff.http('ArchiveFanfic', async (req: ff.Request, res: ff.Response) => {
 			// do if the error is meili related, delete object, else delete document
 			res.sendStatus(500).end();
 			console.error(`Unexpected error on work ${workId}`);
+			console.error(e);
 		}
 	}
 });

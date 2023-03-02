@@ -184,9 +184,7 @@ export async function getWork(workId: string) {
 	work.contentHash.push([Date.now(), hash]);
 
 	if (work.hits == -1 || work.title == '') {
-		if (resultingURL.includes('restricted')) {
-			throw new Error('Restricted Content');
-		}
+		if (resultingURL.includes('restricted')) throw new Error('Restricted Content');
 		throw new Error('Title and hits were not touched. Is AO3 Down?');
 	}
 
