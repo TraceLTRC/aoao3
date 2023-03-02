@@ -72,51 +72,7 @@
 		goto(`?${searchParams.toString()}`);
 	}
 
-	afterNavigate(() => {
-		isFetching = true;
-		const orderBy = $page.url.searchParams.get('order');
-		const body: SearchBody = {
-			query: $page.url.searchParams.get('query') ?? query,
-			order: isWorkOrder(orderBy) ? orderBy : order,
-			includedRatings: empty($page.url.searchParams.get('rating')?.split(',').filter(isRating)),
-			excludedRatings: empty(
-				$page.url.searchParams.get('exclude_rating')?.split(',').filter(isRating)
-			),
-			includedWarnings: empty($page.url.searchParams.get('warning')?.split(',').filter(isWarning)),
-			excludedWarnings: empty(
-				$page.url.searchParams.get('exclude_warning')?.split(',').filter(isWarning)
-			),
-			includedCategories: empty(
-				$page.url.searchParams.get('category')?.split(',').filter(isCategory)
-			),
-			excludedCategories: empty(
-				$page.url.searchParams.get('exlucde_category')?.split(',').filter(isCategory)
-			),
-			authors: empty($page.url.searchParams.get('author')?.split(',')),
-			characters: empty($page.url.searchParams.get('character')?.split(',')),
-			fandoms: empty($page.url.searchParams.get('fandom')?.split(',')),
-			relationships: empty($page.url.searchParams.get('relationship')?.split(',')),
-			tags: empty($page.url.searchParams.get('tag')?.split(','))
-		};
-		console.log(body);
-		workPromise = new Promise((resolve, reject) => {
-			fetch('api/search', {
-				body: JSON.stringify(body),
-				method: 'POST'
-			})
-				.then((response) => {
-					response
-						.json()
-						.then((hits) => {
-							resolve(hits);
-						})
-						.catch((e) => reject(e));
-				})
-				.catch((e) => reject(e));
-		}).finally(() => (isFetching = false));
-	});
-
-	onMount(() => {
+	function setStates() {
 		$page.url.searchParams.forEach((val, key) => {
 			const splitVal = val.split(',').filter((i) => i.length != 0);
 			switch (key) {
@@ -166,6 +122,59 @@
 					break;
 			}
 		});
+	}
+
+	afterNavigate(() => {
+		isFetching = true;
+
+		const orderBy = $page.url.searchParams.get('order');
+		const body: SearchBody = {
+			query: $page.url.searchParams.get('query') ?? query,
+			order: isWorkOrder(orderBy) ? orderBy : order,
+			includedRatings: empty($page.url.searchParams.get('rating')?.split(',').filter(isRating)),
+			excludedRatings: empty(
+				$page.url.searchParams.get('exclude_rating')?.split(',').filter(isRating)
+			),
+			includedWarnings: empty($page.url.searchParams.get('warning')?.split(',').filter(isWarning)),
+			excludedWarnings: empty(
+				$page.url.searchParams.get('exclude_warning')?.split(',').filter(isWarning)
+			),
+			includedCategories: empty(
+				$page.url.searchParams.get('category')?.split(',').filter(isCategory)
+			),
+			excludedCategories: empty(
+				$page.url.searchParams.get('exlucde_category')?.split(',').filter(isCategory)
+			),
+			authors: empty($page.url.searchParams.get('author')?.split(',')),
+			characters: empty($page.url.searchParams.get('character')?.split(',')),
+			fandoms: empty($page.url.searchParams.get('fandom')?.split(',')),
+			relationships: empty($page.url.searchParams.get('relationship')?.split(',')),
+			tags: empty($page.url.searchParams.get('tag')?.split(','))
+		};
+
+		workPromise = new Promise((resolve, reject) => {
+			fetch('api/search', {
+				body: JSON.stringify(body),
+				method: 'POST'
+			})
+				.then((response) => {
+					response
+						.json()
+						.then((hits) => {
+							resolve(hits);
+						})
+						.catch((e) => reject(e));
+				})
+				.catch((e) => reject(e));
+		})
+			.catch((e) => {
+				console.error(`An error occured when searching for works! ${e}`);
+			})
+			.finally(() => (isFetching = false));
+	});
+
+	onMount(() => {
+		setStates();
 	});
 </script>
 
@@ -192,7 +201,7 @@
 					on:click|preventDefault={() => {
 						setQueries();
 					}}
-					class="w-3/4 bg-sky-500 h-fit pb-0.5 rounded-md">Sort & Filter</button
+					class="w-3/4 bg-sky-500 h-fit pb-0.5 rounded-md active:bg-sky-700">Sort & Filter</button
 				>
 				<div class="flex flex-col w-full px-2 pb-1">
 					<div
@@ -237,6 +246,8 @@
 							<WorkCard {work} />
 						{/each}
 					{/if}
+				{:catch}
+					<p class="font-semibold text-red-400">Something horrible happened!</p>
 				{/await}
 			{:else}
 				<Pulse color="#38bdf8" />
