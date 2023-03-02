@@ -53,21 +53,23 @@
 	}
 
 	function setQueries() {
-		$page.url.searchParams.set('query', query);
-		$page.url.searchParams.set('order', order);
-		$page.url.searchParams.set('rating', Array.from(includedRatings).join(','));
-		$page.url.searchParams.set('exclude_rating', Array.from(excludedRatings).join(','));
-		$page.url.searchParams.set('warning', Array.from(includedWarnings).join(','));
-		$page.url.searchParams.set('exclude_warinng', Array.from(excludedWarnings).join(','));
-		$page.url.searchParams.set('category', Array.from(includedCategories).join(','));
-		$page.url.searchParams.set('exclude_category', Array.from(excludedCategories).join(','));
-		$page.url.searchParams.set('author', authors.join(','));
-		$page.url.searchParams.set('relationship', relationships.join(','));
-		$page.url.searchParams.set('fandom', fandoms.join(','));
-		$page.url.searchParams.set('character', characters.join(','));
-		$page.url.searchParams.set('tag', tags.join(','));
+		const searchParams = new URLSearchParams();
 
-		goto(`?${$page.url.searchParams.toString()}`);
+		searchParams.set('query', query);
+		searchParams.set('order', order);
+		searchParams.set('rating', Array.from(includedRatings).join(','));
+		searchParams.set('exclude_rating', Array.from(excludedRatings).join(','));
+		searchParams.set('warning', Array.from(includedWarnings).join(','));
+		searchParams.set('exclude_warinng', Array.from(excludedWarnings).join(','));
+		searchParams.set('category', Array.from(includedCategories).join(','));
+		searchParams.set('exclude_category', Array.from(excludedCategories).join(','));
+		searchParams.set('author', authors.join(','));
+		searchParams.set('relationship', relationships.join(','));
+		searchParams.set('fandom', fandoms.join(','));
+		searchParams.set('character', characters.join(','));
+		searchParams.set('tag', tags.join(','));
+
+		goto(`?${searchParams.toString()}`);
 	}
 
 	afterNavigate(() => {

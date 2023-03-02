@@ -98,6 +98,7 @@
 
 				value = [...value, e.currentTarget.value];
 				e.currentTarget.value = '';
+				tagFetch = undefined;
 			}
 		}}
 		use:floatingRef

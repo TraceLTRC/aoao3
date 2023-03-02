@@ -95,3 +95,7 @@ export type Work = {
 } & WorkMeta;
 
 export type WorkDocument = Work & ArchiveMeta;
+
+export function hasTitle(val: Record<string, any>): val is Pick<WorkDocument, 'title'> {
+	return 'title' in val;
+}
