@@ -108,6 +108,8 @@ func PostWorker(ctx context.Context, log *logger.CustomLogger, rdb *redis.Client
 						Score:  float64(time.Now().UnixMilli()),
 					})
 					time.Sleep(time.Second * 20)
+				case 403, 404:
+					log.Info.Printf("Client error! Restricted or not found, ID:%s", workId)
 				default:
 					log.Err.Printf("Work %s got an unexpected status code, %d", workId, resp.StatusCode)
 					rdb.ZAdd(context.Background(), queueKey, redis.Z{

@@ -17,6 +17,7 @@ export async function getWork(workId: string) {
 	const url = `https://archiveofourown.org/works/${workId}?view_full_work=true&view_adult=true`;
 
 	let $: cheerio.CheerioAPI;
+	let resultingURL;
 
 	try {
 		const res = await axios.get(url, {
@@ -25,11 +26,14 @@ export async function getWork(workId: string) {
 		});
 		if (res.status == 429) {
 			throw new Error('Too Many Requests!');
+		} else if (res.status == 404) {
+			throw new Error('Work Not Found!');
 		} else if (res.status != 200) {
 			throw new Error('Unexpected error! ' + res.status);
 		}
 
 		$ = cheerio.load(res.data);
+		resultingURL = res.request.res.responseUrl as string;
 	} catch (e) {
 		throw e;
 	}
@@ -180,7 +184,10 @@ export async function getWork(workId: string) {
 	work.contentHash.push([Date.now(), hash]);
 
 	if (work.hits == -1 || work.title == '') {
-		throw new Error('Title and hits were not touched, is AO3 Down?');
+		if (resultingURL.includes('restricted')) {
+			throw new Error('Restricted Content');
+		}
+		throw new Error('Title and hits were not touched. Is AO3 Down?');
 	}
 
 	return { work, content };

@@ -49,8 +49,16 @@ app.post('/', jsonParser, async (req, res) => {
 	} catch (e) {
 		if (e instanceof Error && e.message.startsWith('Too Many')) {
 			res.sendStatus(429).end();
+		} else if (e instanceof Error && e.message.includes('Not Found')) {
+			console.log('Archive not found! ID: ' + workId);
+			res.sendStatus(404).end();
+		} else if (e instanceof Error && e.message.includes('Restricted')) {
+			console.log('Restricted archive! ID: ' + workId);
+			res.sendStatus(403).end();
 		} else {
-			throw e;
+			console.error('Error on WorkID: ' + workId);
+			console.error(e);
+			res.sendStatus(500).end();
 		}
 		return;
 	}

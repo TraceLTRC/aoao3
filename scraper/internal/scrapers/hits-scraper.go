@@ -84,9 +84,13 @@ func HitsScraper(ctx context.Context, log *logger.CustomLogger, rdb *redis.Clien
 	})
 
 	// first visit
-	err = collector.Visit(startingUrl)
-	if err != nil {
+	for {
+		err = collector.Visit(startingUrl)
+		if err == nil {
+			break
+		}
 		log.Err.Printf("Failed to visit %s, %v", startingUrl, err)
+		time.Sleep(time.Second * 5)
 	}
 	collector.OnHTMLDetach("ol.pagination.actions")
 
