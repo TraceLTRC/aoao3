@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { error } from '@sveltejs/kit';
-	import type { Category, Rating, Warning } from '../types/work';
+	import type { Category, Rating, Warning } from '$lib/types/work';
 
 	export let rating: Rating;
 	export let chapter: [number, number];

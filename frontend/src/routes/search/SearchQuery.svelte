@@ -10,6 +10,7 @@
 	</div>
 	<input
 		bind:value
+		on:keypress
 		type="search"
 		id="search-query"
 		class="px-2 pb-0.5 rounded-md text-black mx-2"

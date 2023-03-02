@@ -1,25 +1,8 @@
 import { PUBLIC_SEARCH_BEARER, PUBLIC_SEARCH_ENDPOINT } from '$env/static/public';
 import { json } from '@sveltejs/kit';
 import { MeiliSearch } from 'meilisearch';
-import type { workOrder } from '../../../types/search';
-import type { Category, Rating, Warning } from '../../../types/work';
+import type { SearchBody } from '$lib/types/search';
 import type { RequestHandler } from './$types';
-
-type Body = {
-	query: string;
-	order: workOrder;
-	authors: string[] | undefined;
-	relationships: string[] | undefined;
-	fandoms: string[] | undefined;
-	characters: string[] | undefined;
-	tags: string[] | undefined;
-	includedRatings: Rating[] | undefined;
-	includedWarnings: Warning[] | undefined;
-	includedCategories: Category[] | undefined;
-	excludedRatings: Rating[] | undefined;
-	excludedWarnings: Warning[] | undefined;
-	excludedCategories: Category[] | undefined;
-};
 
 const search = new MeiliSearch({
 	host: PUBLIC_SEARCH_ENDPOINT,
@@ -72,7 +55,7 @@ function unknownToFilter(discrete: string, val: string[] | undefined) {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-	const body = (await request.json()) as Body;
+	const body = (await request.json()) as SearchBody;
 
 	const ratingFilter = knownToFilter('rating', body.includedRatings, body.excludedRatings);
 	const categoryFilter = knownToFilter(
@@ -98,8 +81,15 @@ export const POST: RequestHandler = async ({ request }) => {
 		tagFilter
 	];
 
+	const filterStr = filter
+		.filter((i) => i != undefined)
+		.map((i) => `(${i})`)
+		.join(' AND ');
+
+	// console.log(filterStr);
+
 	const res = await search.search(body.query, {
-		filter: filter.filter((i) => i != undefined).join(' AND '),
+		filter: filterStr,
 		sort: [`${body.order}:desc`]
 	});
 

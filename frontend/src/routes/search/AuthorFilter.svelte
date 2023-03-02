@@ -87,6 +87,12 @@
 		}}
 		on:keypress={(e) => {
 			if (e.key == 'Enter') {
+				const q =
+					e.currentTarget.value[0] == '-'
+						? e.currentTarget.value.substring(1)
+						: e.currentTarget.value;
+				if (q.length == 0) return;
+
 				value = [...value, e.currentTarget.value];
 				e.currentTarget.value = '';
 			}

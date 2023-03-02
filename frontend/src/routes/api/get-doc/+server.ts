@@ -1,6 +1,6 @@
 import { PUBLIC_SEARCH_BEARER, PUBLIC_SEARCH_ENDPOINT } from '$env/static/public';
+import type { WorkDocument } from '$lib/types/work';
 import { error, json } from '@sveltejs/kit';
-import type { WorkDocument } from '../../../types/work';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ fetch, url }) => {

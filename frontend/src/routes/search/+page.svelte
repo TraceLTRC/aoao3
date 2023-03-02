@@ -1,7 +1,19 @@
 <script lang="ts">
-	import { slide } from 'svelte/transition';
+	import { afterNavigate, goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { isWorkOrder, orderLabels, type SearchBody, type workOrder } from '$lib/types/search';
+	import WorkCard from '$lib/WorkCard.svelte';
 	import { onMount } from 'svelte';
-	import type { Category, Rating, Warning, WorkDocument } from '../../types/work';
+	import { Pulse } from 'svelte-loading-spinners';
+	import { slide } from 'svelte/transition';
+	import {
+		isCategory,
+		isRating,
+		isWarning,
+		type Category,
+		type Rating,
+		type Warning
+	} from '$lib/types/work';
 	import AuthorFilter from './AuthorFilter.svelte';
 	import CategoryFilter from './CategoryFilter.svelte';
 	import CharacterFilter from './CharacterFilter.svelte';
@@ -11,9 +23,6 @@
 	import SearchQuery from './SearchQuery.svelte';
 	import TagFilter from './TagFilter.svelte';
 	import WarningFilter from './WarningFilter.svelte';
-	import WorkCard from '$lib/WorkCard.svelte';
-	import { orderLabels, type workOrder } from '../../types/search';
-	import { Pulse } from 'svelte-loading-spinners';
 
 	let query: string = '';
 	let order: workOrder = 'lastChecked';
@@ -38,48 +47,123 @@
 	let workPromise: Promise<any>;
 	let isFetching: boolean = true;
 
-	function workFetch() {
-		const arrIncludedRatings = Array.from(includedRatings);
-		const arrIncludedCategories = Array.from(includedCategories);
-		const arrIncludedWarnings = Array.from(includedWarnings);
-		const arrExcludedRatings = Array.from(excludedRatings);
-		const arrExcludedCategories = Array.from(excludedCategories);
-		const arrExcludedWarnings = Array.from(excludedWarnings);
-
-		isFetching = true;
-		workPromise = new Promise((res, rej) => {
-			fetch('/api/search', {
-				method: 'POST',
-				body: JSON.stringify({
-					query,
-					order,
-					authors: authors.length == 0 ? undefined : authors,
-					relationships: relationships.length == 0 ? undefined : relationships,
-					fandoms: fandoms.length == 0 ? undefined : fandoms,
-					characters: characters.length == 0 ? undefined : characters,
-					tags: tags.length == 0 ? undefined : tags,
-					includedRatings: arrIncludedRatings.length == 0 ? undefined : arrIncludedRatings,
-					includedWarnings: arrIncludedWarnings.length == 0 ? undefined : arrIncludedWarnings,
-					includedCategories: arrIncludedCategories.length == 0 ? undefined : arrIncludedCategories,
-					excludedRatings: arrExcludedRatings.length == 0 ? undefined : arrExcludedRatings,
-					excludedWarnings: arrExcludedWarnings.length == 0 ? undefined : arrExcludedWarnings,
-					excludedCategories: arrExcludedCategories.length == 0 ? undefined : arrExcludedCategories
-				})
-			})
-				.then((val) =>
-					val
-						.json()
-						.then((hits) => {
-							res(hits);
-						})
-						.catch(rej)
-				)
-				.catch(rej);
-		}).finally(() => (isFetching = false));
+	function empty<T extends string>(val: T[] | undefined) {
+		if (val == undefined || val.length == 0 || val.every((i) => i.length == 0)) return undefined;
+		else return val;
 	}
 
+	function setQueries() {
+		$page.url.searchParams.set('query', query);
+		$page.url.searchParams.set('order', order);
+		$page.url.searchParams.set('rating', Array.from(includedRatings).join(','));
+		$page.url.searchParams.set('exclude_rating', Array.from(excludedRatings).join(','));
+		$page.url.searchParams.set('warning', Array.from(includedWarnings).join(','));
+		$page.url.searchParams.set('exclude_warinng', Array.from(excludedWarnings).join(','));
+		$page.url.searchParams.set('category', Array.from(includedCategories).join(','));
+		$page.url.searchParams.set('exclude_category', Array.from(excludedCategories).join(','));
+		$page.url.searchParams.set('author', authors.join(','));
+		$page.url.searchParams.set('relationship', relationships.join(','));
+		$page.url.searchParams.set('fandom', fandoms.join(','));
+		$page.url.searchParams.set('character', characters.join(','));
+		$page.url.searchParams.set('tag', tags.join(','));
+
+		goto(`?${$page.url.searchParams.toString()}`);
+	}
+
+	afterNavigate(() => {
+		isFetching = true;
+		const orderBy = $page.url.searchParams.get('order');
+		const body: SearchBody = {
+			query: $page.url.searchParams.get('query') ?? query,
+			order: isWorkOrder(orderBy) ? orderBy : order,
+			includedRatings: empty($page.url.searchParams.get('rating')?.split(',').filter(isRating)),
+			excludedRatings: empty(
+				$page.url.searchParams.get('exclude_rating')?.split(',').filter(isRating)
+			),
+			includedWarnings: empty($page.url.searchParams.get('warning')?.split(',').filter(isWarning)),
+			excludedWarnings: empty(
+				$page.url.searchParams.get('exclude_warning')?.split(',').filter(isWarning)
+			),
+			includedCategories: empty(
+				$page.url.searchParams.get('category')?.split(',').filter(isCategory)
+			),
+			excludedCategories: empty(
+				$page.url.searchParams.get('exlucde_category')?.split(',').filter(isCategory)
+			),
+			authors: empty($page.url.searchParams.get('author')?.split(',')),
+			characters: empty($page.url.searchParams.get('character')?.split(',')),
+			fandoms: empty($page.url.searchParams.get('fandom')?.split(',')),
+			relationships: empty($page.url.searchParams.get('relationship')?.split(',')),
+			tags: empty($page.url.searchParams.get('tag')?.split(','))
+		};
+		console.log(body);
+		workPromise = new Promise((resolve, reject) => {
+			fetch('api/search', {
+				body: JSON.stringify(body),
+				method: 'POST'
+			})
+				.then((response) => {
+					response
+						.json()
+						.then((hits) => {
+							resolve(hits);
+						})
+						.catch((e) => reject(e));
+				})
+				.catch((e) => reject(e));
+		}).finally(() => (isFetching = false));
+	});
+
 	onMount(() => {
-		workFetch();
+		$page.url.searchParams.forEach((val, key) => {
+			const splitVal = val.split(',').filter((i) => i.length != 0);
+			switch (key) {
+				case 'rating':
+					splitVal.filter(isRating).forEach((i) => includedRatings.add(i));
+					includedRatings = includedRatings;
+					break;
+				case 'exclude_rating':
+					splitVal.filter(isRating).forEach((i) => excludedRatings.add(i));
+					excludedRatings = excludedRatings;
+					break;
+				case 'warning':
+					splitVal.filter(isWarning).forEach((i) => includedWarnings.add(i));
+					includedWarnings = includedWarnings;
+					break;
+				case 'exclude_warning':
+					splitVal.filter(isWarning).forEach((i) => excludedWarnings.add(i));
+					excludedWarnings = excludedWarnings;
+					break;
+				case 'category':
+					splitVal.filter(isCategory).forEach((i) => includedCategories.add(i));
+					includedCategories = includedCategories;
+					break;
+				case 'exclude_category':
+					splitVal.filter(isCategory).forEach((i) => excludedCategories.add(i));
+					excludedCategories = excludedCategories;
+					break;
+				case 'author':
+					splitVal.forEach((i) => authors.push(i));
+					authors = authors;
+					break;
+				case 'relationship':
+					splitVal.forEach((i) => relationships.push(i));
+					relationships = relationships;
+					break;
+				case 'fandom':
+					splitVal.forEach((i) => fandoms.push(i));
+					fandoms = fandoms;
+					break;
+				case 'character':
+					splitVal.forEach((i) => characters.push(i));
+					characters = characters;
+					break;
+				case 'tag':
+					splitVal.forEach((i) => tags.push(i));
+					tags = tags;
+					break;
+			}
+		});
 	});
 </script>
 
@@ -98,10 +182,13 @@
 				autocomplete="off"
 				transition:slide
 				class="flex flex-col items-center gap-y-1 w-full bg-zinc-700 px-2 py-4 rounded-md"
+				on:keypress={(e) => {
+					if (e.key == 'Enter') e.preventDefault();
+				}}
 			>
 				<button
-					on:click={() => {
-						workFetch();
+					on:click|preventDefault={() => {
+						setQueries();
 					}}
 					class="w-3/4 bg-sky-500 h-fit pb-0.5 rounded-md">Sort & Filter</button
 				>
@@ -117,7 +204,12 @@
 						{/each}
 					</select>
 				</div>
-				<SearchQuery bind:value={query} />
+				<SearchQuery
+					bind:value={query}
+					on:keypress={(e) => {
+						if (e.key == 'Enter') setQueries();
+					}}
+				/>
 				<RatingFilter bind:included={includedRatings} bind:excluded={excludedRatings} />
 				<WarningFilter bind:included={includedWarnings} bind:excluded={excludedWarnings} />
 				<CategoryFilter bind:included={includedCategories} bind:excluded={excludedCategories} />

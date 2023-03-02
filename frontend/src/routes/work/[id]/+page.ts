@@ -1,5 +1,5 @@
 import { PUBLIC_BUCKET_ENDPOINT } from '$env/static/public';
-import type { WorkContent, WorkDocument } from '../../../types/work';
+import type { WorkContent, WorkDocument } from '../../../lib/types/work';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, params }) => {

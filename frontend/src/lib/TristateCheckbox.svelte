@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { onMount } from 'svelte';
-	import type { States } from '../types/search';
+	import type { States } from '$lib/types/search';
 
 	let dispatcher = createEventDispatcher();
 

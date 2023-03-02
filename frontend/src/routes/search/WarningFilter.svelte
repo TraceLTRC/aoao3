@@ -3,7 +3,7 @@
 	import { slide } from 'svelte/transition';
 	import DownArrowIcon from '$lib/DownArrowIcon.svelte';
 	import TristateCheckbox from '$lib/TristateCheckbox.svelte';
-	import { isWarning, warningTuple, type Warning } from '../../types/work';
+	import { isWarning, warningTuple, type Warning } from '$lib/types/work';
 
 	export let included: Set<Warning> = new Set();
 	export let excluded: Set<Warning> = new Set();

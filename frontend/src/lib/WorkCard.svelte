@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { WorkDocument } from '../types/work';
+	import type { WorkDocument } from '$lib/types/work';
 	import PictureTags from './PictureTags.svelte';
 	import DOMPurify from 'isomorphic-dompurify';
 	import { DateTime } from 'luxon';

@@ -51,10 +51,13 @@
 	{#if value.length}
 		<div class="flex flex-col w-full gap-y-2 mb-2">
 			{#each value as el}
-				<div class="flex flex-row gap-x-1 ml-2" transition:fly={{ duration: 100, x: 50 }}>
+				<div
+					class="flex flex-row items-center gap-x-1 ml-2"
+					transition:fly={{ duration: 100, x: 50 }}
+				>
 					<button
 						type="button"
-						class="aspect-square bg-stone-300 rounded-full text-[red] flex items-center justify-center pb-0.5"
+						class="aspect-square h-6 bg-stone-300 rounded-full text-[red] flex items-center justify-center pb-0.5"
 						on:click={() => {
 							removeFromArray(value, el);
 							value = value;
@@ -87,6 +90,12 @@
 		}}
 		on:keypress={(e) => {
 			if (e.key == 'Enter') {
+				const q =
+					e.currentTarget.value[0] == '-'
+						? e.currentTarget.value.substring(1)
+						: e.currentTarget.value;
+				if (q.length == 0) return;
+
 				value = [...value, e.currentTarget.value];
 				e.currentTarget.value = '';
 			}
