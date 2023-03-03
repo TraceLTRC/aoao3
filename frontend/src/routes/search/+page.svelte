@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { isWorkOrder, orderLabels, type SearchBody, type workOrder } from '$lib/types/search';
-	import WorkCard from '$lib/WorkCard.svelte';
-	import { onMount } from 'svelte';
-	import { Pulse } from 'svelte-loading-spinners';
-	import { slide } from 'svelte/transition';
+	import PageSelector from '$lib/PageSelector.svelte';
+	import {
+		isWorkOrder,
+		orderLabels,
+		toInteger,
+		type SearchBody,
+		type SearchResponse,
+		type workOrder
+	} from '$lib/types/search';
 	import {
 		isCategory,
 		isRating,
@@ -14,6 +18,9 @@
 		type Rating,
 		type Warning
 	} from '$lib/types/work';
+	import WorkCard from '$lib/WorkCard.svelte';
+	import { Pulse } from 'svelte-loading-spinners';
+	import { slide } from 'svelte/transition';
 	import AuthorFilter from './AuthorFilter.svelte';
 	import CategoryFilter from './CategoryFilter.svelte';
 	import CharacterFilter from './CharacterFilter.svelte';
@@ -24,27 +31,31 @@
 	import TagFilter from './TagFilter.svelte';
 	import WarningFilter from './WarningFilter.svelte';
 
+	let innerWidth = 0;
+
+	let currPage = 1;
+
 	let query: string = '';
 	let order: workOrder = 'lastChecked';
 
-	let includedRatings: Set<Rating> = new Set();
-	let excludedRatings: Set<Rating> = new Set();
+	let includedRatings: Set<Rating>;
+	let excludedRatings: Set<Rating>;
 
-	let includedWarnings: Set<Warning> = new Set();
-	let excludedWarnings: Set<Warning> = new Set();
+	let includedWarnings: Set<Warning>;
+	let excludedWarnings: Set<Warning>;
 
-	let includedCategories: Set<Category> = new Set();
-	let excludedCategories: Set<Category> = new Set();
+	let includedCategories: Set<Category>;
+	let excludedCategories: Set<Category>;
 
-	let authors: string[] = [];
-	let relationships: string[] = [];
-	let fandoms: string[] = [];
-	let characters: string[] = [];
-	let tags: string[] = [];
+	let authors: string[];
+	let relationships: string[];
+	let fandoms: string[];
+	let characters: string[];
+	let tags: string[];
 
 	let isOpen = false;
 
-	let workPromise: Promise<any>;
+	let workPromise: Promise<SearchResponse>;
 	let isFetching: boolean = true;
 
 	function empty<T extends string>(val: T[] | undefined) {
@@ -72,65 +83,15 @@
 		goto(`?${searchParams.toString()}`);
 	}
 
-	function setStates() {
-		$page.url.searchParams.forEach((val, key) => {
-			const splitVal = val.split(',').filter((i) => i.length != 0);
-			switch (key) {
-				case 'rating':
-					splitVal.filter(isRating).forEach((i) => includedRatings.add(i));
-					includedRatings = includedRatings;
-					break;
-				case 'exclude_rating':
-					splitVal.filter(isRating).forEach((i) => excludedRatings.add(i));
-					excludedRatings = excludedRatings;
-					break;
-				case 'warning':
-					splitVal.filter(isWarning).forEach((i) => includedWarnings.add(i));
-					includedWarnings = includedWarnings;
-					break;
-				case 'exclude_warning':
-					splitVal.filter(isWarning).forEach((i) => excludedWarnings.add(i));
-					excludedWarnings = excludedWarnings;
-					break;
-				case 'category':
-					splitVal.filter(isCategory).forEach((i) => includedCategories.add(i));
-					includedCategories = includedCategories;
-					break;
-				case 'exclude_category':
-					splitVal.filter(isCategory).forEach((i) => excludedCategories.add(i));
-					excludedCategories = excludedCategories;
-					break;
-				case 'author':
-					splitVal.forEach((i) => authors.push(i));
-					authors = authors;
-					break;
-				case 'relationship':
-					splitVal.forEach((i) => relationships.push(i));
-					relationships = relationships;
-					break;
-				case 'fandom':
-					splitVal.forEach((i) => fandoms.push(i));
-					fandoms = fandoms;
-					break;
-				case 'character':
-					splitVal.forEach((i) => characters.push(i));
-					characters = characters;
-					break;
-				case 'tag':
-					splitVal.forEach((i) => tags.push(i));
-					tags = tags;
-					break;
-			}
-		});
-	}
-
 	afterNavigate(() => {
 		isFetching = true;
 
 		const orderBy = $page.url.searchParams.get('order');
+		currPage = toInteger($page.url.searchParams.get('page'), 1);
 		const body: SearchBody = {
 			query: $page.url.searchParams.get('query') ?? query,
 			order: isWorkOrder(orderBy) ? orderBy : order,
+			page: currPage,
 			includedRatings: empty($page.url.searchParams.get('rating')?.split(',').filter(isRating)),
 			excludedRatings: empty(
 				$page.url.searchParams.get('exclude_rating')?.split(',').filter(isRating)
@@ -170,67 +131,68 @@
 			.catch((e) => {
 				console.error(`An error occured when searching for works! ${e}`);
 			})
-			.finally(() => (isFetching = false));
-	});
-
-	onMount(() => {
-		setStates();
+			.finally(() => (isFetching = false)) as Promise<SearchResponse>;
 	});
 </script>
 
+<svelte:window bind:innerWidth />
+
 <div class="w-screen min-h-fit flex flex-col sm:flex-row flex-auto">
 	<div class="px-4 sm:w-[35vw] lg:w-[25vw] h-fit flex flex-col items-center order-1 sm:order-2">
-		<button
-			on:click={() => (isOpen = !isOpen)}
-			class="transition-colors duration-200 w-full bg-zinc-700 rounded-md mt-3 mb-2 h-fit flex flex-row items-center justify-center gap-x-2 {isOpen
-				? 'bg-zinc-500'
-				: ''}"
-		>
-			<span>Filter Menu</span>
-		</button>
-		{#if isOpen}
-			<form
-				autocomplete="off"
-				transition:slide
-				class="flex flex-col items-center gap-y-1 w-full bg-zinc-700 px-2 py-4 rounded-md"
-				on:keypress={(e) => {
-					if (e.key == 'Enter') e.preventDefault();
-				}}
+		{#if innerWidth <= 640}
+			<button
+				on:click={() => (isOpen = !isOpen)}
+				class="transition-colors duration-200 w-full bg-zinc-700 rounded-md mt-3 h-fit flex flex-row items-center justify-center gap-x-2 {isOpen
+					? 'bg-zinc-500'
+					: ''}"
 			>
-				<button
-					on:click|preventDefault={() => {
-						setQueries();
-					}}
-					class="w-3/4 bg-sky-500 h-fit pb-0.5 rounded-md active:bg-sky-700">Sort & Filter</button
-				>
-				<div class="flex flex-col w-full px-2 pb-1">
-					<div
-						class="mb-2 font-semibold bg-gradient-to-r from-white via-transparent to-transparent pb-[1px] flex flex-col"
-					>
-						<label for="order-by" class="bg-zinc-700 h-full w-full pl-2">Sort by:</label>
-					</div>
-					<select bind:value={order} id="order-by" class="text-black pl-2 pb-0.5 mx-2 rounded-md">
-						{#each Object.entries(orderLabels) as order}
-							<option value={order[0]}>{order[1]}</option>
-						{/each}
-					</select>
-				</div>
-				<SearchQuery
-					bind:value={query}
-					on:keypress={(e) => {
-						if (e.key == 'Enter') setQueries();
-					}}
-				/>
-				<RatingFilter bind:included={includedRatings} bind:excluded={excludedRatings} />
-				<WarningFilter bind:included={includedWarnings} bind:excluded={excludedWarnings} />
-				<CategoryFilter bind:included={includedCategories} bind:excluded={excludedCategories} />
-				<AuthorFilter bind:value={authors} />
-				<FandomFilter bind:value={fandoms} />
-				<RelationshipFilter bind:value={relationships} />
-				<CharacterFilter bind:value={characters} />
-				<TagFilter bind:value={tags} />
-			</form>
+				<span>Filter Menu</span>
+			</button>
 		{/if}
+		<form
+			autocomplete="off"
+			transition:slide
+			class="flex flex-col items-center gap-y-1 w-full bg-zinc-700 px-2 py-4 rounded-md mt-3 {isOpen ||
+			innerWidth > 640
+				? ''
+				: 'hidden'}"
+			on:keypress={(e) => {
+				if (e.key == 'Enter') e.preventDefault();
+			}}
+		>
+			<button
+				on:click|preventDefault={() => {
+					setQueries();
+				}}
+				class="w-3/4 bg-sky-500 h-fit pb-0.5 rounded-md active:bg-sky-700">Sort & Filter</button
+			>
+			<div class="flex flex-col w-full px-2 pb-1">
+				<div
+					class="mb-2 font-semibold bg-gradient-to-r from-white via-transparent to-transparent pb-[1px] flex flex-col"
+				>
+					<label for="order-by" class="bg-zinc-700 h-full w-full pl-2">Sort by:</label>
+				</div>
+				<select bind:value={order} id="order-by" class="text-black pl-2 pb-0.5 mx-2 rounded-md">
+					{#each Object.entries(orderLabels) as order}
+						<option value={order[0]}>{order[1]}</option>
+					{/each}
+				</select>
+			</div>
+			<SearchQuery
+				bind:value={query}
+				on:keypress={(e) => {
+					if (e.key == 'Enter') setQueries();
+				}}
+			/>
+			<RatingFilter bind:included={includedRatings} bind:excluded={excludedRatings} />
+			<WarningFilter bind:included={includedWarnings} bind:excluded={excludedWarnings} />
+			<CategoryFilter bind:included={includedCategories} bind:excluded={excludedCategories} />
+			<AuthorFilter bind:value={authors} />
+			<FandomFilter bind:value={fandoms} />
+			<RelationshipFilter bind:value={relationships} />
+			<CharacterFilter bind:value={characters} />
+			<TagFilter bind:value={tags} />
+		</form>
 	</div>
 	<div class="sm:w-[65vw] lg:w-[75vw] order-2 sm:order-1 flex flex-col px-4 py-2">
 		<h1 class="text-2xl font-semibold text-center sm:text-left mb-2">Search results:</h1>
@@ -239,18 +201,28 @@
 				{#await workPromise}
 					<Pulse color="#38bdf8" />
 				{:then works}
-					{#if works.length == 0}
+					{#if works.hits.length == 0}
 						<p>Nothing but us chickens!</p>
 					{:else}
-						{#each works as work}
-							<WorkCard {work} />
-						{/each}
+						<PageSelector
+							maxPage={works.totalPages}
+							page={currPage}
+							on:pagechange={(e) => {
+								const searchParams = new URLSearchParams($page.url.searchParams);
+								searchParams.set('page', `${e.detail.page}`);
+
+								goto(`?${searchParams.toString()}`);
+							}}
+							class="mb-3"
+						>
+							{#each works.hits as work}
+								<WorkCard {work} />
+							{/each}
+						</PageSelector>
 					{/if}
 				{:catch}
 					<p class="font-semibold text-red-400">Something horrible happened!</p>
 				{/await}
-			{:else}
-				<Pulse color="#38bdf8" />
 			{/if}
 		</div>
 	</div>

@@ -36,33 +36,31 @@
 			/>
 		</span>
 	</button>
-	{#if isOpen}
-		<div
-			class="flex flex-col items-center gap-y-2 mx-3 text-sm"
-			transition:slide={{ duration: 200 }}
-		>
-			{#each categories as category}
-				<TristateCheckbox
-					id={`category-${category.str.replaceAll(' ', '_')}`}
-					freindlyId={category.str}
-					on:change={(e) => {
-						if (e.detail.value === true) {
-							included.add(category.str);
-							excluded.delete(category.str);
-						} else if (e.detail.value === false) {
-							included.delete(category.str);
-							excluded.add(category.str);
-						} else {
-							included.delete(category.str);
-							excluded.delete(category.str);
-						}
+	<div
+		class="flex flex-col items-center gap-y-2 mx-3 text-sm {isOpen ? '' : 'hidden'}"
+		transition:slide={{ duration: 200 }}
+	>
+		{#each categories as category}
+			<TristateCheckbox
+				id={`category-${category.str.replaceAll(' ', '_')}`}
+				freindlyId={category.str}
+				on:change={(e) => {
+					if (e.detail.value === true) {
+						included.add(category.str);
+						excluded.delete(category.str);
+					} else if (e.detail.value === false) {
+						included.delete(category.str);
+						excluded.add(category.str);
+					} else {
+						included.delete(category.str);
+						excluded.delete(category.str);
+					}
 
-						included = included;
-						excluded = excluded;
-					}}
-					value={initCategories.includes(category.str) ? true : undefined}
-				/>
-			{/each}
-		</div>
-	{/if}
+					included = included;
+					excluded = excluded;
+				}}
+				value={initCategories.includes(category.str) ? true : undefined}
+			/>
+		{/each}
+	</div>
 </div>

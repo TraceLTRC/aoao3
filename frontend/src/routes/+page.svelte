@@ -14,7 +14,7 @@
 <div class="m-2 flex flex-col items-center gap-y-6">
 	<main class="flex flex-col items-center justify-center text-center">
 		<h2 class="text-3xl py-2 px-6">
-			Because the <em>archive</em> in AO3 is a false statement
+			Because the &quot;archive&quot; in AO3 is <em>technically</em> not true.
 		</h2>
 		<p>
 			Currently storing <b>{new Intl.NumberFormat().format(data.bucketStats.keys)}</b> works with

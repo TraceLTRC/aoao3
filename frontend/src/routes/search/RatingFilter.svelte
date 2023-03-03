@@ -35,33 +35,31 @@
 			/>
 		</span>
 	</button>
-	{#if isOpen}
-		<div
-			class="flex flex-col items-center gap-y-2 mx-3 text-sm"
-			transition:slide={{ duration: 200 }}
-		>
-			{#each ratings as rating}
-				<TristateCheckbox
-					id={`rating-${rating.str.replaceAll(' ', '_')}`}
-					freindlyId={rating.str}
-					on:change={(e) => {
-						if (e.detail.value === true) {
-							included.add(rating.str);
-							excluded.delete(rating.str);
-						} else if (e.detail.value === false) {
-							included.delete(rating.str);
-							excluded.add(rating.str);
-						} else {
-							included.delete(rating.str);
-							excluded.delete(rating.str);
-						}
+	<div
+		class="flex flex-col items-center gap-y-2 mx-3 text-sm {isOpen ? '' : 'hidden'}"
+		transition:slide={{ duration: 200 }}
+	>
+		{#each ratings as rating}
+			<TristateCheckbox
+				id={`rating-${rating.str.replaceAll(' ', '_')}`}
+				freindlyId={rating.str}
+				on:change={(e) => {
+					if (e.detail.value === true) {
+						included.add(rating.str);
+						excluded.delete(rating.str);
+					} else if (e.detail.value === false) {
+						included.delete(rating.str);
+						excluded.add(rating.str);
+					} else {
+						included.delete(rating.str);
+						excluded.delete(rating.str);
+					}
 
-						included = included;
-						excluded = excluded;
-					}}
-					value={initRatings.includes(rating.str) ? true : undefined}
-				/>
-			{/each}
-		</div>
-	{/if}
+					included = included;
+					excluded = excluded;
+				}}
+				value={initRatings.includes(rating.str) ? true : undefined}
+			/>
+		{/each}
+	</div>
 </div>

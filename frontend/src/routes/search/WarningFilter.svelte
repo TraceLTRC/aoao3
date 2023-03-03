@@ -35,33 +35,31 @@
 			/>
 		</span>
 	</button>
-	{#if isOpen}
-		<div
-			class="flex flex-col items-center gap-y-2 mx-3 text-sm"
-			transition:slide={{ duration: 200 }}
-		>
-			{#each warnings as warning}
-				<TristateCheckbox
-					id={`warning-${warning.str.replaceAll(' ', '_')}`}
-					freindlyId={warning.str}
-					on:change={(e) => {
-						if (e.detail.value === true) {
-							included.add(warning.str);
-							excluded.delete(warning.str);
-						} else if (e.detail.value === false) {
-							included.delete(warning.str);
-							excluded.add(warning.str);
-						} else {
-							included.delete(warning.str);
-							excluded.delete(warning.str);
-						}
+	<div
+		class="flex flex-col items-center gap-y-2 mx-3 text-sm {isOpen ? '' : 'hidden'}"
+		transition:slide={{ duration: 200 }}
+	>
+		{#each warnings as warning}
+			<TristateCheckbox
+				id={`warning-${warning.str.replaceAll(' ', '_')}`}
+				freindlyId={warning.str}
+				on:change={(e) => {
+					if (e.detail.value === true) {
+						included.add(warning.str);
+						excluded.delete(warning.str);
+					} else if (e.detail.value === false) {
+						included.delete(warning.str);
+						excluded.add(warning.str);
+					} else {
+						included.delete(warning.str);
+						excluded.delete(warning.str);
+					}
 
-						included = included;
-						excluded = excluded;
-					}}
-					value={initWarnings.includes(warning.str) ? true : undefined}
-				/>
-			{/each}
-		</div>
-	{/if}
+					included = included;
+					excluded = excluded;
+				}}
+				value={initWarnings.includes(warning.str) ? true : undefined}
+			/>
+		{/each}
+	</div>
 </div>

@@ -4,20 +4,24 @@
 		<p>
 			<b
 				>This site is still a WIP. There are a things I could polish and more fandoms I could
-				archive. If you want to suggest things for this site, please do so at the <a
+				archive. If you want to suggest things for this site, or you want to add new fandoms to the
+				archiving list, please create an issue at <a
 					target="_blank"
 					rel="noopener noreferrer"
-					href="https://github.com/TraceLosu/aoao3">Github Repo</a
+					href="https://github.com/TraceLosu/aoao3">github</a
 				></b
-			>
+			>!
 		</p>
 		<p>
 			This website aims to archive all fanfictions from some fandoms in <a
 				target="_blank"
 				rel="noopener noreferrer"
 				href="https://archiveofourown.org">archiveofourown.org</a
-			>. This website works by constantly watching new works in AO3 and extracting the information
-			needed to archive the work (the content, the notes, the summary, and etc.)
+			>. This website works by constantly watching new works in AO3 and saving the work for archival
+			purposes. Think of it like
+			<a target="_blank" rel="noopener noreferrer" href="https://archive.org/web"
+				>The WaybackMachine</a
+			> but for fanficitons in AO3.
 		</p>
 		<p>Currently, we only archive these fandoms:</p>
 		<ul>
@@ -33,11 +37,11 @@
 		</ul>
 		<p>
 			Works that contain any of these tags will be automatically saved and archived to this site. If
-			the work is deleted in AO3, the archive of the work stays here, untouched.
+			the work is deleted in AO3, then a copy of the work will stay here, untouched.
 		</p>
 		<p>
 			If you are an author of a work and want it to get deleted from this site, please contact me
-			through discord, <b>TraceL#0001</b>
+			through discord, <b>STRCH#0001</b>
 		</p>
 	</div>
 </div>

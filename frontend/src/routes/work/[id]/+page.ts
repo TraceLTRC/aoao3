@@ -11,7 +11,6 @@ export const load: PageLoad = async ({ fetch, params }) => {
 	);
 
 	return {
-		...workDoc,
-		content: (await workContentRes.json()) as WorkContent
+		...workDoc
 	};
 };

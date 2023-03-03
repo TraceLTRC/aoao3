@@ -90,8 +90,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const res = await search.search(body.query, {
 		filter: filterStr,
-		sort: [`${body.order}:desc`]
+		sort: [`${body.order}:desc`],
+		hitsPerPage: 20,
+		page: body.page
 	});
 
-	return json(res.hits);
+	return json(res);
 };

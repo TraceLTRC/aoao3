@@ -1,4 +1,4 @@
-import type { Rating, Category, Warning } from './work';
+import type { Rating, Category, Warning, WorkDocument } from './work';
 
 export const workOrders = [
 	'author',
@@ -35,6 +35,7 @@ export type States = true | false | null;
 export type SearchBody = {
 	query: string;
 	order: workOrder;
+	page: number;
 	authors?: string[];
 	relationships?: string[];
 	fandoms?: string[];
@@ -47,3 +48,19 @@ export type SearchBody = {
 	excludedWarnings?: Warning[];
 	excludedCategories?: Category[];
 };
+
+export type SearchResponse = {
+	hits: WorkDocument[];
+	query: string;
+	processingTimeMs: number;
+	hitsPerPage: number;
+	page: number;
+	totalPages: number;
+	totalHits: number;
+};
+
+export function toInteger(str: string | null | undefined, def: number): number {
+	if (str == undefined) return def;
+	const num = parseInt(str, 10);
+	return isNaN(num) ? def : num;
+}

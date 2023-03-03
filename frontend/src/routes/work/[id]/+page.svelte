@@ -74,8 +74,12 @@
 </script>
 
 <!-- My sanitizer is AO3 and whoever made this mortal flesh of mine -->
-{#if data.content.skin}
-	{@html `<` + `style>${data.content.skin}</style>`}
+{#if contentPromise != undefined}
+	{#await contentPromise then content}
+		{#if content.skin}
+			{@html `<` + `style>${content.skin}</style>`}
+		{/if}
+	{/await}
 {/if}
 
 <div class="w-full min-h-min text-sm lg:text-base flex flex-col items-center justify-center">

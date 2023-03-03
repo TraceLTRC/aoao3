@@ -8,6 +8,8 @@
 
 	export let maxPage: number;
 	export let page: number = 1;
+	export let className = '';
+	export { className as class };
 
 	let candidatePage: string = `${page}`;
 	$: candidatePage = `${page}`;
@@ -46,7 +48,7 @@
 	}
 </script>
 
-<div id="top-page-select" class="flex flex-row justify-center items-center gap-x-1">
+<div id="top-page-select" class="flex flex-row justify-center items-center gap-x-1 {className}">
 	<button on:click={goPrevPage} class="h-7 w-7 flex justify-center items-center">
 		<BackArrowIcon class="text-sky-400 h-6 w-6" />
 	</button>
