@@ -7,7 +7,7 @@ export const load: PageLoad = async ({ fetch, params }) => {
 		await fetch('/api/get-doc?work=' + encodeURIComponent(params.id))
 	).json()) as WorkDocument;
 	const workContentRes = await fetch(
-		PUBLIC_BUCKET_ENDPOINT + workDoc.id + '/' + workDoc.contentHash.at(-1)?.[1] + '.br'
+		PUBLIC_BUCKET_ENDPOINT + '/' + workDoc.id + '/' + workDoc.contentHash.at(-1)?.[1] + '.br'
 	);
 
 	return {

@@ -8,15 +8,9 @@
 
 	export let maxPage: number;
 	export let page: number = 1;
-	export let secondary = false;
 
 	let candidatePage: string = `${page}`;
 	$: candidatePage = `${page}`;
-
-	let touchStartX = 0;
-	let touchStartY = 0;
-	let touchEndX = 0;
-	let touchEndY = 0;
 
 	let isModalOpen = false;
 
@@ -26,7 +20,7 @@
 		}
 
 		page++;
-		dispatch('pagechange');
+		dispatch('pagechange', { page });
 	}
 
 	function goPrevPage() {
@@ -35,45 +29,39 @@
 		}
 
 		page--;
-		dispatch('pagechange');
+		dispatch('pagechange', { page });
+	}
+
+	function pageHop() {
+		let candidatePageNumber = parseInt(candidatePage, 10);
+
+		if (isNaN(candidatePageNumber) || candidatePageNumber < 1 || candidatePageNumber > maxPage) {
+			alert('Invalid page number!');
+		} else {
+			page = candidatePageNumber;
+			candidatePage = `${page}`;
+			isModalOpen = false;
+			dispatch('pagechange', { page });
+		}
 	}
 </script>
 
-<svelte:window
-	on:keydown={(e) => {
-		if (secondary) return;
-
-		switch (e.key) {
-			case 'ArrowRight':
-				goNextPage();
-				break;
-			case 'ArrowLeft':
-				goPrevPage();
-				break;
-		}
-	}}
-	on:touchstart={(e) => {
-		if (secondary) return;
-
-		touchStartX = e.changedTouches[0].screenX;
-		touchStartY = e.changedTouches[0].screenY;
-	}}
-	on:touchend={(e) => {
-		if (secondary) return;
-
-		touchEndX = e.changedTouches[0].screenX;
-		touchEndY = e.changedTouches[0].screenY;
-		if (Math.abs(touchEndY - touchStartY) <= 30) {
-			if (touchEndX > touchStartX && touchEndX - touchStartX > 250) {
-				goPrevPage();
-			} else if (touchEndX < touchStartX && touchStartX - touchEndX > 250) {
-				goNextPage();
-			}
-		}
-	}}
-/>
-
 <div id="top-page-select" class="flex flex-row justify-center items-center gap-x-1">
+	<button on:click={goPrevPage} class="h-7 w-7 flex justify-center items-center">
+		<BackArrowIcon class="text-sky-400 h-6 w-6" />
+	</button>
+	<button
+		on:click={() => (isModalOpen = true)}
+		class="border border-zinc-400 py-1 px-2 hover:bg-zinc-600 cursor-pointer"
+	>
+		<span>{page}/{maxPage}</span>
+	</button>
+	<button on:click={goNextPage} class="h-7 w-7 flex justify-center items-center">
+		<FrontArrowIcon class="text-sky-400 h-6 w-6" />
+	</button>
+</div>
+<slot />
+<div id="bottom-page-select" class="flex flex-row justify-center items-center gap-x-1">
 	<button on:click={goPrevPage} class="h-7 w-7 flex justify-center items-center">
 		<BackArrowIcon class="text-sky-400 h-6 w-6" />
 	</button>
@@ -103,31 +91,21 @@
 		<div
 			class="w-1/2 h-min bg-zinc-900 rounded-xl flex flex-col justify-center items-center py-4 px-4"
 		>
-			<h4 class="text-xl mb-4">Jump to page</h4>
+			<label for="page-hopper" class="text-xl mb-4">Jump to page</label>
 			<input
 				type="text"
+				id="page-hopper"
 				bind:value={candidatePage}
 				class="w-full h-fit bg-zinc-800 rounded-md px-2 text-lg text-center focus:outline-none"
 				min="1"
 				max={maxPage}
+				on:keypress={(e) => {
+					if (e.key == 'Enter') pageHop();
+				}}
 			/>
 			<div class="flex flex-row gap-x-2 h-fit mt-6 mb-2 text-white">
 				<button
-					on:click={() => {
-						let candidatePageNumber = parseInt(candidatePage);
-
-						if (
-							candidatePageNumber == null ||
-							candidatePageNumber < 1 ||
-							candidatePageNumber > maxPage
-						) {
-							alert('Invalid page number!');
-						} else {
-							page = candidatePageNumber;
-							candidatePage = `${page}`;
-							isModalOpen = false;
-						}
-					}}
+					on:click={pageHop}
 					class="flex items-center justify-center h-fit w-fit p-2 bg-sky-600 rounded-md"
 				>
 					Ok

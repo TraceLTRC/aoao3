@@ -1,17 +1,45 @@
 <script lang="ts">
-	import DOMPurify from 'isomorphic-dompurify';
+	import { browser } from '$app/environment';
+	import { afterNavigate, goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { PUBLIC_BUCKET_ENDPOINT } from '$env/static/public';
 	import PageSelector from '$lib/PageSelector.svelte';
+	import type { WorkContent } from '$lib/types/work';
+	import { error } from '@sveltejs/kit';
+	import DOMPurify from 'isomorphic-dompurify';
+	import { Pulse } from 'svelte-loading-spinners';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
-	let currPage = 1;
-
 	const publishedDate = new Date(data.publishedTime);
 	const lastUpdated = data.lastUpdated ? new Date(data.lastUpdated) : undefined;
 	const lastChecked = new Date(data.lastChecked);
+	const latestHash = data.contentHash.at(-1)?.[1];
+
+	if (latestHash == undefined) {
+		throw error(500, 'Content Hash not found!');
+	}
+
+	let currPage = 1;
+	let currHash = latestHash;
+	let isFetching = true;
+
+	let contentPromise: Promise<WorkContent>;
 
 	const intl = Intl.NumberFormat();
+
+	function fetchWork(hash: string): Promise<WorkContent> {
+		return new Promise((res, rej) => {
+			isFetching = true;
+			fetch(`${PUBLIC_BUCKET_ENDPOINT}/${data.id}/${hash}.br`)
+				.then((resp) => {
+					resp.json().then(res).catch(rej);
+				})
+				.catch(rej)
+				.finally(() => (isFetching = false));
+		});
+	}
 
 	function dateToString(date: Date) {
 		return `${date.getFullYear()}-${
@@ -19,12 +47,36 @@
 		}-${date.getDate()}`;
 	}
 
-	function onPageChange() {
-		document.getElementById('top-page-select')?.scrollIntoView({
-			behavior: 'smooth'
-		});
+	afterNavigate(() => {
+		const targetPageStr = $page.url.searchParams.get('chapter');
+		if (targetPageStr != null) {
+			const targetPage = parseInt(targetPageStr, 10);
+			if (isNaN(targetPage) || targetPage > data.currChapter || targetPage < 1) {
+				currPage = 1;
+			} else {
+				currPage = targetPage;
+			}
+		}
+
+		const targetHash = $page.url.searchParams.get('hash');
+		if (
+			targetHash != undefined &&
+			data.contentHash.some((arr) => arr[1] == targetHash) &&
+			currHash != targetHash
+		) {
+			currHash = targetHash;
+		}
+	});
+
+	$: {
+		if (browser) contentPromise = fetchWork(currHash);
 	}
 </script>
+
+<!-- My sanitizer is AO3 and whoever made this mortal flesh of mine -->
+{#if data.content.skin}
+	{@html `<` + `style>${data.content.skin}</style>`}
+{/if}
 
 <div class="w-full min-h-min text-sm lg:text-base flex flex-col items-center justify-center">
 	<dl
@@ -158,24 +210,25 @@
 			</dl>
 		</dd>
 	</dl>
+	<!-- Use client side fetching for content -->
 	<div
 		id="workskin"
 		class="md:w-4/5 lg:w-3/5 xl:w-1/2 flex flex-col gap-y-4 pt-4 text-[#d4d4d8] items-center"
 	>
-		<div class="flex flex-col items-stretch">
-			<h1 class="text-2xl text-center">{data.title}</h1>
+		<div class="flex flex-col items-center">
+			<h1 class="text-2xl text-center mx-2">{data.title}</h1>
 			{#if data.authors.length}
 				<h3 class="flex flex-row justify-center items-center gap-x-1">
 					{#each data.authors as author}
 						<a
 							class="text-base md:text-lg decoration-dotted underline hover:bg-zinc-500 after:content-[','] after:last:content-['']"
-							href="/search?author={author}">{author}</a
+							href="/search?author={encodeURIComponent(author)}">{author}</a
 						>
 					{/each}
 				</h3>
 			{:else}
 				<span>by</span>
-				<a href="/search?author=anonymous" class="hover:bg-zinc-500 decoration-dotted underline">
+				<a href="/search?author=Anonymous" class="hover:bg-zinc-500 decoration-dotted underline">
 					Anonymous
 				</a>
 			{/if}
@@ -187,75 +240,96 @@
 					</div>
 				</div>
 			{/if}
-			{#if data.content.beginningNotes}
-				<div class="flex flex-col mt-4 gap-y-1 mx-8 mb-2">
-					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
-					<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
-						{@html DOMPurify.sanitize(data.content.beginningNotes)}
+			<select
+				class="text-[#d4d4d8] bg-zinc-700 shadow-xl rounded-lg h-fit py-1 px-2 mb-2 mt-4"
+				bind:value={currHash}
+				on:change={(e) => {
+					const queries = new URLSearchParams($page.url.searchParams);
+					queries.set('hash', e.currentTarget.value);
+					queries.set('chapter', `1`);
+					goto(`?${queries.toString()}`, {
+						noScroll: true
+					});
+				}}
+			>
+				{#each data.contentHash as contentHash}
+					<option value={contentHash[1]}>{new Date(contentHash[0]).toLocaleString()}</option>
+				{/each}
+			</select>
+			{#if contentPromise != undefined}
+				{#await contentPromise then content}
+					<div class="flex flex-col mt-4 gap-y-1 mx-8 mb-2">
+						<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
+						<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
+							{@html DOMPurify.sanitize(content.beginningNotes)}
+						</div>
 					</div>
-				</div>
+				{:catch}
+					<p>Failed to load work!</p>
+				{/await}
 			{/if}
 		</div>
-		{#if data.maxChapter != 1}
-			<div class="py-4 border-b-2 border-t-2 border-white">
+		{#if contentPromise != undefined}
+			{#await contentPromise}
+				<Pulse color="#38bdf8" />
+			{:then content}
 				<PageSelector
+					maxPage={content.chapters.length}
 					bind:page={currPage}
-					on:pagechange={onPageChange}
-					maxPage={data.currChapter}
-				/>
-			</div>
-		{/if}
-		<div class="flex flex-col items-stretch px-4 mb-2 gap-y-4">
-			{#if data.content.chapters[currPage - 1].title && !(`Chapter ${currPage}` == data.content.chapters[currPage - 1].title)}
-				<h1 class="text-lg text-center mb-4">
-					Chapter {currPage}: {data.content.chapters[currPage - 1].title}
-				</h1>
-			{/if}
-			{#if data.content.chapters[currPage - 1].summary}
-				<div class="flex flex-col gap-y-1 mx-8 mb-2">
-					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Summary:</h5>
-					<div class="prose prose-zinc !prose-invert prose-sm pl-2">
-						{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].summary)}
+					on:pagechange={(e) => {
+						const queries = new URLSearchParams($page.url.searchParams);
+						queries.set('chapter', e.detail.page);
+						goto(`?${queries.toString()}`, {
+							noScroll: true
+						});
+					}}
+				>
+					<div class="flex flex-col items-stretch px-4 mb-2 gap-y-4">
+						{#if content.chapters[currPage - 1].title && !(`Chapter ${currPage}` == content.chapters[currPage - 1].title)}
+							<h1 class="text-lg text-center mb-4">
+								Chapter {currPage}: {content.chapters[currPage - 1].title}
+							</h1>
+						{/if}
+						{#if content.chapters[currPage - 1].summary}
+							<div class="flex flex-col gap-y-1 mx-8 mb-2">
+								<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Summary:</h5>
+								<div class="prose prose-zinc !prose-invert prose-sm pl-2">
+									{@html DOMPurify.sanitize(content.chapters[currPage - 1].summary)}
+								</div>
+							</div>
+						{/if}
+						{#if content.chapters[currPage - 1].beginningNotes}
+							<div class="flex flex-col gap-y-1 mx-8 mb-2">
+								<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
+								<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
+									{@html DOMPurify.sanitize(content.chapters[currPage - 1].beginningNotes)}
+								</div>
+							</div>
+						{/if}
+						<div class="prose prose-zinc !prose-invert prose-sm md:prose-base">
+							{@html DOMPurify.sanitize(content.chapters[currPage - 1].content)}
+						</div>
+						{#if content.chapters[currPage - 1].endingNotes}
+							<div class="flex flex-col gap-y-1 mx-8">
+								<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
+								<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
+									{@html DOMPurify.sanitize(content.chapters[currPage - 1].endingNotes)}
+								</div>
+							</div>
+						{/if}
 					</div>
-				</div>
-			{/if}
-			{#if data.content.chapters[currPage - 1].beginningNotes}
-				<div class="flex flex-col gap-y-1 mx-8 mb-2">
-					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
-					<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
-						{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].beginningNotes)}
-					</div>
-				</div>
-			{/if}
-			<div class="prose prose-zinc !prose-invert prose-sm md:prose-base">
-				{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].content)}
-			</div>
-			{#if data.content.chapters[currPage - 1].endingNotes}
-				<div class="flex flex-col gap-y-1 mx-8">
-					<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
-					<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
-						{@html DOMPurify.sanitize(data.content.chapters[currPage - 1].endingNotes)}
-					</div>
-				</div>
-			{/if}
-		</div>
-		{#if data.maxChapter != 1}
-			<div class="py-4 border-b-2 border-t-2 border-white">
-				<PageSelector
-					bind:page={currPage}
-					on:pagechange={onPageChange}
-					maxPage={data.currChapter}
-					secondary
-				/>
-			</div>
-		{/if}
-		{#if data.content.endingNotes}
-			<div class="flex flex-col mt-4 gap-y-1 mx-8 mb-2">
-				<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
-				<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
-					{@html DOMPurify.sanitize(data.content.endingNotes)}
-				</div>
-			</div>
+					{#if content.endingNotes}
+						<div class="flex flex-col mt-4 gap-y-1 mx-8 mb-2">
+							<h5 class="text-base md:text-lg border-b-2 border-white pb-0.5">Notes:</h5>
+							<div class="prose prose-zinc !prose-invert prose-sm md:prose-base pl-2">
+								{@html DOMPurify.sanitize(content.endingNotes)}
+							</div>
+						</div>
+					{/if}
+				</PageSelector>
+			{:catch}
+				<p>Failed to load work!</p>
+			{/await}
 		{/if}
 	</div>
 </div>
